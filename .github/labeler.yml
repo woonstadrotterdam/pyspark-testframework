@@ -1,0 +1,12 @@
+# Add 'Documentation' label to any changes within 'docs' folder or any subfolders
+documentation:
+  - changed-files:
+      - any-glob-to-any-file:
+          - docs/**
+          - "**/*.md"
+enhancement:
+  - head-branch: ["^feature", "feature"]
+bug:
+  - head-branch: ["^bug", "bug", "^fix"]
+chore:
+  - head-branch: ["^chore", "chore"]
