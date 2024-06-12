@@ -16,9 +16,17 @@ dependencies = []
 version = "0.0.0"
 
 [project.optional-dependencies]
-dev = [
-    "pre-commit==3.7.*",
+test = [
+     "pre-commit==3.7.1",
+     "pytest==8.2.2"
 ]
+
+dev = [
+    "pyspark-testframework[test]",
+    "ruff==0.4.8"
+]
+
+
 
 [tool.setuptools]
 packages = ["testframework"]
