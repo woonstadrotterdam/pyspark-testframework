@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61.0.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyspark-testframework"
+authors = [
+    {name = "Tomer Gabay", email = "tomer.gabay@woonstadrotterdam.nl"},
+    {name = "Vincent van der Meij", email = "vincent.van.der.meij@woonstadrotterdam.nl"},
+    {name = "Tiddo Loos", email = "tiddo.loos@woonstadrotterdam.nl"}
+]
+readme = {file = "README.md", content-type = "text/markdown"}
+requires-python = ">=3.9.5"
+license = {file = "LICENSE"}
+dependencies = []
+version = "0.0.0"
+
+[project.optional-dependencies]
+dev = [
+    "pre-commit==3.7.*",
+]
+
+[tool.setuptools]
+packages = ["testframework"]
+package-dir = {"" = "src"}
