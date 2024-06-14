@@ -9,7 +9,7 @@
 ⏳ **Work in progress**
 
 ![](https://progress-bar.dev/100/?title=RegexTest&width=120)  
-![](https://progress-bar.dev/100/?title=IsInteger&width=120)  
+![](https://progress-bar.dev/100/?title=IsIntegerString&width=83)  
 ![](https://progress-bar.dev/50/?title=ValidEmail&width=113)  
 ![](https://progress-bar.dev/0/?title=ContainsValue&width=95)  
 ![](https://progress-bar.dev/0/?title=ValidValueRange&width=83)  

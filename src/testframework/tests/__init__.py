@@ -1,3 +1,3 @@
-from .regex import IsInteger, RegexTest
+from .regex import IsIntegerString, RegexTest
 
-__all__ = ["RegexTest", "IsInteger"]
+__all__ = ["RegexTest", "IsIntegerString"]

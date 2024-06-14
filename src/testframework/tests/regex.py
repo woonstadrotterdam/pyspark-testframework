@@ -1,6 +1,7 @@
 from pyspark.sql import Column, DataFrame
 from pyspark.sql import functions as F
 from pyspark.sql.types import StringType
+
 from testframework.base import Test
 from testframework.utils.decorators import account_for_nullable, allowed_col_types
 
@@ -20,9 +21,9 @@ class RegexTest(Test):
         return F.regexp_extract(F.col(col), self.pattern, 0) != ""
 
 
-class IsInteger(RegexTest):
+class IsIntegerString(RegexTest):
     """
-    Returns True when a value is, or can be converted to an integer without losing information.
+    Returns True when a string can be converted to an integer without losing information.
     01 -> False
     1 -> True
     -1 -> True
@@ -30,5 +31,5 @@ class IsInteger(RegexTest):
     1.0 -> True
     """
 
-    def __init__(self, name: str = "IsInteger") -> None:
+    def __init__(self, name: str = "IsIntegerString") -> None:
         super().__init__(name=name, pattern=r"^-?(0|[1-9]\d*)(\.0+)?$")
