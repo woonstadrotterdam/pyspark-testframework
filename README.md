@@ -45,6 +45,7 @@ mail_tester = RegexTest(
 test_result_email = mail_tester.test(
     df=df,
     col="email",
+    primary_key="primary_key",
     nullable=False
 )
 
@@ -54,6 +55,7 @@ integer_string_tester = IsIntegerString()
 test_result_number = number_tester.test(
     df=df,
     col="number",
+    primary_key="primary_key",
     nullable=True
 )
 
