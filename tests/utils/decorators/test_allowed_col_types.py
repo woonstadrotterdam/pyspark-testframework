@@ -29,7 +29,7 @@ def test_allowed_col_types_with_valid_column_type(spark):
 
     test = ColumnTypeTest(name="test")
     result_df = test.test(
-        df, col="test_column", business_key="test_column", nullable=True
+        df, col="test_column", primary_key="test_column", nullable=True
     )
     assert result_df is not None  # Check if DataFrame is returned
 
@@ -49,7 +49,7 @@ def test_allowed_col_types_with_invalid_column_type(spark):
 
     test = ColumnTypeTest(name="test")
     with pytest.raises(TypeError) as excinfo:
-        test.test(df, col="test_column", business_key="test_column", nullable=True)
+        test.test(df, col="test_column", primary_key="test_column", nullable=True)
 
     assert "Column 'test_column' is not of expected types" in str(excinfo.value)
 
@@ -69,7 +69,7 @@ def test_allowed_col_types_with_multiple_valid_types(spark):
 
     test = MultiTypeTest(name="test")
     result_df = test.test(
-        df, col="test_column", business_key="test_column", nullable=True
+        df, col="test_column", primary_key="test_column", nullable=True
     )
     assert result_df is not None  # Check if DataFrame is returned
 
@@ -94,10 +94,10 @@ def test_allowed_col_types_with_string_and_integer_columns(spark):
 
     test = MixedTypeTest(name="test")
     result_df_string = test.test(
-        df, col="string_column", business_key="string_column", nullable=True
+        df, col="string_column", primary_key="string_column", nullable=True
     )
     result_df_int = test.test(
-        df, col="int_column", business_key="int_column", nullable=True
+        df, col="int_column", primary_key="int_column", nullable=True
     )
 
     assert result_df_string is not None  # Check if DataFrame is returned
@@ -119,6 +119,6 @@ def test_allowed_col_types_with_no_matching_column_type(spark):
 
     test = NoMatchingTypeTest(name="test")
     with pytest.raises(TypeError) as excinfo:
-        test.test(df, col="test_column", business_key="test_column", nullable=True)
+        test.test(df, col="test_column", primary_key="test_column", nullable=True)
 
     assert "Column 'test_column' is not of expected types" in str(excinfo.value)

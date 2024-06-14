@@ -18,7 +18,7 @@ def test_regex_test_method_nullable_false(spark):
     df = spark.createDataFrame(data, schema)
 
     regex_test = RegexTest(name="email_test", pattern=r"^[\w\.-]+@[\w\.-]+\.\w+$")
-    result_df = regex_test.test(df, col="value", business_key="id", nullable=False)
+    result_df = regex_test.test(df, col="value", primary_key="id", nullable=False)
     results = result_df.select("id", "value", "value__email_test").collect()
 
     expected_results = [
@@ -49,7 +49,7 @@ def test_regex_test_method_without_nulls_nullable_true(spark):
     df = spark.createDataFrame(data, schema)
 
     regex_test = RegexTest(name="email_test", pattern=r"^[\w\.-]+@[\w\.-]+\.\w+$")
-    result_df = regex_test.test(df, col="value", business_key="id", nullable=True)
+    result_df = regex_test.test(df, col="value", primary_key="id", nullable=True)
     results = result_df.select("id", "value", "value__email_test").collect()
 
     expected_results = [
@@ -80,7 +80,7 @@ def test_regex_test_method_without_nulls_nullable_false(spark):
     df = spark.createDataFrame(data, schema)
 
     regex_test = RegexTest(name="email_test", pattern=r"^[\w\.-]+@[\w\.-]+\.\w+$")
-    result_df = regex_test.test(df, col="value", business_key="id", nullable=False)
+    result_df = regex_test.test(df, col="value", primary_key="id", nullable=False)
     results = result_df.select("id", "value", "value__email_test").collect()
 
     expected_results = [
@@ -106,7 +106,7 @@ def test_regex_test_method_all_nulls_nullable_true(spark):
     df = spark.createDataFrame(data, schema)
 
     regex_test = RegexTest(name="email_test", pattern=r"^[\w\.-]+@[\w\.-]+\.\w+$")
-    result_df = regex_test.test(df, col="value", business_key="id", nullable=True)
+    result_df = regex_test.test(df, col="value", primary_key="id", nullable=True)
     results = result_df.select("id", "value", "value__email_test").collect()
 
     expected_results = [
@@ -130,7 +130,7 @@ def test_regex_test_method_all_nulls_nullable_false(spark):
     df = spark.createDataFrame(data, schema)
 
     regex_test = RegexTest(name="email_test", pattern=r"^[\w\.-]+@[\w\.-]+\.\w+$")
-    result_df = regex_test.test(df, col="value", business_key="id", nullable=False)
+    result_df = regex_test.test(df, col="value", primary_key="id", nullable=False)
     results = result_df.select("id", "value", "value__email_test").collect()
 
     expected_results = [
@@ -159,7 +159,7 @@ def test_regex_test_method_no_nulls_and_boolean_output(spark):
     df = spark.createDataFrame(data, schema)
 
     regex_test = RegexTest(name="email_test", pattern=r"^[\w\.-]+@[\w\.-]+\.\w+$")
-    result_df = regex_test.test(df, col="value", business_key="id", nullable=True)
+    result_df = regex_test.test(df, col="value", primary_key="id", nullable=True)
     assert result_df.schema["value__email_test"].dataType == BooleanType()
 
 
@@ -180,7 +180,7 @@ def test_regex_test_method_mixed_data(spark):
     df = spark.createDataFrame(data, schema)
 
     regex_test = RegexTest(name="email_test", pattern=r"^[\w\.-]+@[\w\.-]+\.\w+$")
-    result_df = regex_test.test(df, col="value", business_key="id", nullable=True)
+    result_df = regex_test.test(df, col="value", primary_key="id", nullable=True)
     results = result_df.select("id", "value", "value__email_test").collect()
 
     expected_results = [

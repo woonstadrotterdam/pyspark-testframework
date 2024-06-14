@@ -14,8 +14,9 @@ class DataQualityTest(ABC):
         self,
         df: DataFrame,
         col: str,
-        business_key: Union[str, list[str]],
+        primary_key: Union[str, list[str]],
         nullable: bool,
+        result_col: Optional[str] = None,
     ) -> DataFrame:
         pass
 
@@ -44,7 +45,7 @@ class Test(DataQualityTest):
         """
         pass
 
-    def generate_test_col_name(self, col: str) -> str:
+    def generate_result_col_name(self, col: str) -> str:
         """
         Generates a standardized name for the test result column.
 
@@ -60,8 +61,9 @@ class Test(DataQualityTest):
         self,
         df: DataFrame,
         col: str,
-        business_key: Union[str, list[str]],
+        primary_key: Union[str, list[str]],
         nullable: bool,
+        result_col: Optional[str] = None,
     ) -> DataFrame:
         """
         Applies the test to the specified column of the DataFrame.
@@ -69,17 +71,18 @@ class Test(DataQualityTest):
         Args:
             df (DataFrame): The DataFrame to test.
             col (str): The name of the column to test.
-            business_key (Union[str, list[str]]): The name(s) of the business key(s).
-            nullable (bool): Flag indicating whether the column can contain null values.
+            primary_key (Union[str, list[str]]): The column name(s) of the primary key(s).
+            nullable (bool): Flag indicating whether the column is allowed to have Null values.
+            result_col (Optional[str]): The name of the column to store the test result. By default None. If None, a default name will be generated.
 
         Returns:
             DataFrame: A DataFrame with the test results for the specified column.
         """
-        business_key = [business_key] if isinstance(business_key, str) else business_key
+        primary_key = [primary_key] if isinstance(primary_key, str) else primary_key
         test_function = self._test_impl(df, col, nullable)
-        test_name = self.generate_test_col_name(col)
+        result_col = result_col if result_col else self.generate_result_col_name(col)
 
         # Apply the test result to the DataFrame
-        return df.withColumn(test_name, test_function).select(
-            business_key + [col, test_name]
+        return df.withColumn(result_col, test_function).select(
+            primary_key + [col, result_col]
         )

@@ -24,7 +24,7 @@ def test_regex_test_method(spark):
     regex_test = RegexTest(name="email_test", pattern=r"^[\w\.-]+@[\w\.-]+\.\w+$")
 
     # Apply the test
-    result_df = regex_test.test(df, col="value", business_key="id", nullable=True)
+    result_df = regex_test.test(df, col="value", primary_key="id", nullable=True)
 
     # Collect results
     results = result_df.select("id", "value", "value__email_test").collect()
@@ -57,7 +57,7 @@ def test_regex_test_no_match(spark):
 
     regex_test = RegexTest(name="email_test", pattern=r"^[\w\.-]+@[\w\.-]+\.\w+$")
 
-    result_df = regex_test.test(df, col="value", business_key="id", nullable=False)
+    result_df = regex_test.test(df, col="value", primary_key="id", nullable=False)
 
     results = result_df.select("id", "value", "value__email_test").collect()
 
@@ -88,7 +88,7 @@ def test_regex_test_partial_match(spark):
 
     regex_test = RegexTest(name="domain_test", pattern=r"@example\.com$")
 
-    result_df = regex_test.test(df, col="value", business_key="id", nullable=False)
+    result_df = regex_test.test(df, col="value", primary_key="id", nullable=False)
 
     results = result_df.select("id", "value", "value__domain_test").collect()
 
@@ -120,7 +120,7 @@ def test_regex_test_empty_string(spark):
 
     regex_test = RegexTest(name="non_empty_test", pattern=r"^.+$")
 
-    result_df = regex_test.test(df, col="value", business_key="id", nullable=True)
+    result_df = regex_test.test(df, col="value", primary_key="id", nullable=True)
 
     results = result_df.select("id", "value", "value__non_empty_test").collect()
 
@@ -154,7 +154,7 @@ def test_regex_test_special_characters(spark):
         name="special_char_test", pattern=r"^[\w\.-]+@[\w\.-]+\.\w+$"
     )
 
-    result_df = regex_test.test(df, col="value", business_key="id", nullable=True)
+    result_df = regex_test.test(df, col="value", primary_key="id", nullable=True)
 
     results = result_df.select("id", "value", "value__special_char_test").collect()
 
