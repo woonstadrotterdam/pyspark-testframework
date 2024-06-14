@@ -12,13 +12,16 @@ authors = [
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.9.5"
 license = {file = "LICENSE"}
-dependencies = []
+dependencies = [
+    "pyspark>=3.3.4"
+]
 version = "0.0.0"
 
 [project.optional-dependencies]
 test = [
-     "pre-commit==3.7.1",
-     "pytest==8.2.2"
+    "pyspark==3.3.4",
+    "pre-commit==3.7.1",
+    "pytest==8.2.2"
 ]
 
 dev = [
