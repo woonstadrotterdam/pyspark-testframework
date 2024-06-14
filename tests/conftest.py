@@ -1,3 +1,9 @@
-def pytest_sessionfinish(session, exitstatus):
-    if exitstatus == 5:  # Exit code 5 means no tests were collected
-        session.exitstatus = 0  # Change the exit code to 0 (success)
+import pytest
+from pyspark.sql import SparkSession
+
+
+@pytest.fixture(scope="session")
+def spark():
+    return (
+        SparkSession.builder.master("local[1]").appName("pytest-pyspark").getOrCreate()
+    )
