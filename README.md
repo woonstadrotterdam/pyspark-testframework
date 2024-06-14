@@ -10,10 +10,9 @@
 
 ![](https://progress-bar.dev/100/?title=RegexTest&width=120)  
 ![](https://progress-bar.dev/100/?title=IsInteger&width=120)  
-![](https://progress-bar.dev/100/?title=ValidIntegerRange&width=72)  
+![](https://progress-bar.dev/100/?title=ValidNumericRange&width=72)  
 ![](https://progress-bar.dev/50/?title=ValidEmail&width=113)  
 ![](https://progress-bar.dev/0/?title=ContainsValue&width=95)  
-![](https://progress-bar.dev/0/?title=ValidFloatRange&width=83)  
 ![](https://progress-bar.dev/0/?title=ValidCategory&width=95)  
 ![](https://progress-bar.dev/0/?title=CorrectValue&width=102)  
 ![](<https://progress-bar.dev/0/?title=(...)&width=145>)
