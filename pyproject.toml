@@ -21,7 +21,8 @@ version = "0.0.0"
 test = [
     "pyspark==3.3.4",
     "pre-commit==3.7.1",
-    "pytest==8.2.2"
+    "pytest==8.2.2",
+    "cloudpickle<2.2.0"
 ]
 
 dev = [
