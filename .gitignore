@@ -162,3 +162,4 @@ cython_debug/
 #.idea/
 
 .python-version
+src/testframework/_version.py

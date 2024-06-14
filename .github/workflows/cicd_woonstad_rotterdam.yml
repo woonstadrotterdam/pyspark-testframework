@@ -1,4 +1,6 @@
-name: CICD
+# This CICD is specifically for the dependency versioning used by Woonstad Rotterdam (python3.9, pyspark3.3.4)
+
+name: CICD_Woonstad_Rotterdam
 
 on:
   workflow_dispatch:
@@ -13,7 +15,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.9"]
 
     steps:
       - uses: actions/checkout@v4
@@ -44,6 +46,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install ".[test]"
+          pip install pyspark==3.3.4
         env:
           PYTHONPATH: src # Ensure src is in the PYTHONPATH
 
