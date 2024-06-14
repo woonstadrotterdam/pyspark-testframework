@@ -1,0 +1,60 @@
+# This CICD is specifically for the dependency versioning used by Woonstad Rotterdam (python3.9, pyspark3.3.4)
+
+name: CICD_Woonstad_Rotterdam
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  CI:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ["3.9"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Cache pre-commit environment
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pre-commit
+            ./.pre-commit
+          key: ${{ runner.os }}-precommit-${{ hashFiles('.pre-commit-config.yaml') }}-${{ matrix.python-version }}
+          restore-keys: |
+            ${{ runner.os }}-precommit-${{ matrix.python-version }}-
+            ${{ runner.os }}-precommit-
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "11" # PySpark works well with Java 8 or 11
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ".[test]"
+          pip install pyspark==3.3.4
+        env:
+          PYTHONPATH: src # Ensure src is in the PYTHONPATH
+
+      - name: Run pre-commit hooks
+        run: pre-commit run --all-files
+
+      - name: Run pytest
+        env:
+          SPARK_LOCAL_IP: 127.0.0.1
+          PYTHONPATH: src # Ensure src is in the PYTHONPATH
+        run: python -m pytest
