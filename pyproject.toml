@@ -10,7 +10,8 @@ authors = [
     {name = "Woonstad Rotterdam", email = "info@woonstadrotterdam.nl"},
     {name = "Tomer Gabay", email = "tomer.gabay@woonstadrotterdam.nl"},
     {name = "Vincent van der Meij", email = "vincent.van.der.meij@woonstadrotterdam.nl"},
-    {name = "Tiddo Loos", email = "tiddo.loos@woonstadrotterdam.nl"}
+    {name = "Tiddo Loos", email = "tiddo.loos@woonstadrotterdam.nl"},
+    {name = "Ben Verhees", email = "ben.verhees@woonstadrotterdam.nl"}
 ]
 keywords = ["pyspark", "dataframe", "test", "testframework"]
 classifiers = [
