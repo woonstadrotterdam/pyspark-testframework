@@ -1,13 +1,15 @@
-[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
-![MIT License](https://img.shields.io/badge/License-MIT-yellow.svg)
+![](https://img.shields.io/pypi/pyversions/pyspark-testframework)
 ![Build Status](https://github.com/woonstadrotterdam/pyspark-testframework/actions/workflows/cicd.yml/badge.svg)
+[![Version](https://img.shields.io/pypi/v/pyspark-testframework)](https://pypi.org/project/pyspark-testframework/)
+![](https://img.shields.io/github/license/woonstadrotterdam/pyspark-testframework)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
 # pyspark-testframework
 
 ⏳ **Work in progress**
 
 ![](https://progress-bar.dev/100/?title=RegexTest&width=120)  
-![](https://progress-bar.dev/50/?title=IsInteger&width=120)  
+![](https://progress-bar.dev/100/?title=IsInteger&width=120)  
 ![](https://progress-bar.dev/50/?title=ValidEmail&width=113)  
 ![](https://progress-bar.dev/0/?title=ContainsValue&width=95)  
 ![](https://progress-bar.dev/0/?title=ValidValueRange&width=83)  
