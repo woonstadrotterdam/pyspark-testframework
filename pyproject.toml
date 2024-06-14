@@ -1,13 +1,25 @@
 [build-system]
-requires = ["setuptools>=61.0.0"]
+requires = ["setuptools>=61.0.0", "wheel", "setuptools_scm>=8"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyspark-testframework"
+dynamic = ["version"]
+description = "Testframework for PySpark DataFrames"
 authors = [
+    {name = "Woonstad Rotterdam", email = "info@woonstadrotterdam.nl"},
     {name = "Tomer Gabay", email = "tomer.gabay@woonstadrotterdam.nl"},
     {name = "Vincent van der Meij", email = "vincent.van.der.meij@woonstadrotterdam.nl"},
     {name = "Tiddo Loos", email = "tiddo.loos@woonstadrotterdam.nl"}
+]
+keywords = ["pyspark", "dataframe", "test", "testframework"]
+classifiers = [
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
 ]
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.9.5"
@@ -15,7 +27,6 @@ license = {file = "LICENSE"}
 dependencies = [
     "pyspark>=3.3.4"
 ]
-version = "0.0.0"
 
 [project.optional-dependencies]
 test = [
@@ -24,13 +35,17 @@ test = [
     "pytest==8.2.2",
     "cloudpickle<2.2.0"
 ]
-
 dev = [
     "pyspark-testframework[test]",
     "ruff==0.4.8"
 ]
 
+[tool.setuptools_scm]
+version_file = "src/testframework/_version.py"
 
+[project.urls]
+Homepage = "https://github.com/woonstadrotterdam/pyspark-testframework"
+Issues = "https://github.com/woonstadrotterdam/pyspark-testframework/issues"
 
 [tool.setuptools]
 packages = ["testframework"]
