@@ -8,7 +8,7 @@ from testframework.utils.decorators import account_for_nullable, allowed_col_typ
 
 class ValidCategory(Test):
     """
-    Returns True if the value is one of the possible categorical values.
+    Returns True if the value is one of the specified categorical values.
     """
 
     def __init__(self, *, categories: set[str], name: str = "ValidCategory"):

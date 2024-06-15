@@ -9,7 +9,7 @@ from testframework.utils.decorators import account_for_nullable
 
 class CorrectValue(Test):
     """
-    Returns True if a value is the correct value.
+    Returns True if a value is the specified (correct) value.
     """
 
     def __init__(self, *, name: str = "CorrectValue", correct_value: Any):
