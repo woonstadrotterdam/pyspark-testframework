@@ -24,6 +24,14 @@ class DataQualityTest(ABC):
     def _test_impl(self, df: DataFrame, col: str, nullable: bool) -> Column:
         pass
 
+    @abstractmethod
+    def __str__(self) -> str:
+        pass
+
+    @abstractmethod
+    def __repr__(self) -> str:
+        pass
+
 
 class Test(DataQualityTest):
     """

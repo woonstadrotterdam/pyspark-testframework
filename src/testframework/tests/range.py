@@ -38,3 +38,9 @@ class ValidNumericRange(Test):
     )
     def _test_impl(self, df: DataFrame, col: str, nullable: bool) -> Column:
         return (F.col(col) >= self.min_value) & (F.col(col) <= self.max_value)
+
+    def __str__(self) -> str:
+        return f"{self.name}(min_value={self.min_value}, max_value={self.max_value})"
+
+    def __repr__(self) -> str:
+        return f"{self.name}(min_value={self.min_value}, max_value={self.max_value})"

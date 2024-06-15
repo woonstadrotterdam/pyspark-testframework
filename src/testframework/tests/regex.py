@@ -20,6 +20,12 @@ class RegexTest(Test):
     def _test_impl(self, df: DataFrame, col: str, nullable: bool) -> Column:
         return F.regexp_extract(F.col(col), self.pattern, 0) != ""
 
+    def __str__(self) -> str:
+        return f"{self.name}(pattern={self.pattern})"
+
+    def __repr__(self) -> str:
+        return f"{self.name}(pattern={self.pattern})"
+
 
 class IntegerString(RegexTest):
     """
