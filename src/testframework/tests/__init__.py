@@ -1,5 +1,5 @@
 from .category import ValidCategory
 from .range import ValidNumericRange
-from .regex import IsIntegerString, RegexTest
+from .regex import IntegerString, RegexTest
 
-__all__ = ["RegexTest", "IsIntegerString", "ValidNumericRange", "ValidCategory"]
+__all__ = ["RegexTest", "IntegerString", "ValidNumericRange", "ValidCategory"]

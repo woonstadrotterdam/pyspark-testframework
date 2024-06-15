@@ -19,9 +19,10 @@ from testframework.utils.decorators import account_for_nullable, allowed_col_typ
 class ValidNumericRange(Test):
     def __init__(
         self,
+        *,
         name: str = "ValidNumericRange",
-        min_value: Union[int, str, None] = None,
-        max_value: Union[int, str, None] = None,
+        min_value: Union[int, float, str, None] = None,
+        max_value: Union[int, float, str, None] = None,
     ) -> None:
         super().__init__(name=name)
         if min_value is None and max_value is None:
