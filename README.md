@@ -65,20 +65,20 @@ test_result_number.show()
 
 Output for ValidEmail:
 
-| primary_key | email\_\_ValidEmail |
-| ----------- | ------------------- |
-| 1           | True                |
-| 2           | False               |
-| 3           | False               |
-| 4           | True                |
-| 5           | False               |
+| primary_key | email                     | email\_\_ValidEmail |
+| ----------- | ------------------------- | ------------------- |
+| 1           | info@woonstadrotterdam.nl | True                |
+| 2           | infowoonstadrotterdam.nl  | False               |
+| 3           | @woonstadrotterdam.nl     | False               |
+| 4           | dev@woonstadrotterdam.nl  | True                |
+| 5           | Null                      | False               |
 
 Output for IsIntegerString:
 
-| primary_key | number\_\_IsIntegerString |
-| ----------- | ------------------------- |
-| 1           | True                      |
-| 2           | False                     |
-| 3           | True                      |
-| 4           | True                      |
-| 5           | True                      |
+| primary_key | number | number\_\_IsIntegerString |
+| ----------- | ------ | ------------------------- |
+| 1           | 123    | True                      |
+| 2           | 01     | False                     |
+| 3           | -45    | True                      |
+| 4           | 1.0    | True                      |
+| 5           | Null   | True                      |
