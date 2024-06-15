@@ -1,6 +1,6 @@
 import pytest
 from pyspark.sql import types as T
-from testframework.tests import IsIntegerString
+from testframework.tests import IntegerString
 
 test_data = [
     ("01", False, "pk1"),  # Leading zero
@@ -20,7 +20,7 @@ test_data = [
 
 
 @pytest.mark.parametrize("value, expected, primary_key", test_data)
-def test_IsIntegerString(spark, value, expected, primary_key):
+def test_IntegerString(spark, value, expected, primary_key):
     schema = T.StructType(
         [
             T.StructField("primary_key", T.StringType(), nullable=False),
@@ -29,7 +29,7 @@ def test_IsIntegerString(spark, value, expected, primary_key):
     )
 
     df = spark.createDataFrame([(primary_key, value)], schema)
-    is_integer = IsIntegerString()
+    is_integer = IntegerString()
     result_df = df.withColumn(
         "result", is_integer._test_impl(df, "value", nullable=False)
     )

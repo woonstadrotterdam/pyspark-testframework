@@ -32,7 +32,7 @@ Input DataFrame:
 | 5           | Null                      | Null   |
 
 ```python
-from testframework.tests import RegexTest, IsIntegerString
+from testframework.tests import RegexTest, IntegerString
 
 # test for valid email addresses
 email_regex = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
@@ -50,7 +50,7 @@ test_result_email = mail_tester.test(
 )
 
 # test for integer strings
-integer_string_tester = IsIntegerString()
+integer_string_tester = IntegerString()
 
 test_result_number = number_tester.test(
     df=df,
@@ -73,12 +73,12 @@ Output for ValidEmail:
 | 4           | dev@woonstadrotterdam.nl  | True                |
 | 5           | Null                      | False               |
 
-Output for IsIntegerString:
+Output for IntegerString:
 
-| primary_key | number | number\_\_IsIntegerString |
-| ----------- | ------ | ------------------------- |
-| 1           | 123    | True                      |
-| 2           | 01     | False                     |
-| 3           | -45    | True                      |
-| 4           | 1.0    | True                      |
-| 5           | Null   | True                      |
+| primary_key | number | number\_\_IntegerString |
+| ----------- | ------ | ----------------------- |
+| 1           | 123    | True                    |
+| 2           | 01     | False                   |
+| 3           | -45    | True                    |
+| 4           | 1.0    | True                    |
+| 5           | Null   | True                    |

@@ -27,3 +27,9 @@ class ValidCategory(Test):
                 "Nullable is False doesn't make sense if correct_values contains None, please use nullable=True"
             )
         return F.col(column).isin(self.categories)
+
+    def __str__(self) -> str:
+        return f"{self.name}(categories={self.categories})"
+
+    def __repr__(self) -> str:
+        return f"{self.name}(categories={self.categories})"

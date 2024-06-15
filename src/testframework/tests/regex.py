@@ -11,7 +11,7 @@ class RegexTest(Test):
     Test to check if a column's values match a regular expression pattern.
     """
 
-    def __init__(self, name: str, pattern: str) -> None:
+    def __init__(self, *, name: str, pattern: str) -> None:
         super().__init__(name=name)
         self.pattern = pattern
 
@@ -20,8 +20,14 @@ class RegexTest(Test):
     def _test_impl(self, df: DataFrame, col: str, nullable: bool) -> Column:
         return F.regexp_extract(F.col(col), self.pattern, 0) != ""
 
+    def __str__(self) -> str:
+        return f"{self.name}(pattern={self.pattern})"
 
-class IsIntegerString(RegexTest):
+    def __repr__(self) -> str:
+        return f"{self.name}(pattern={self.pattern})"
+
+
+class IntegerString(RegexTest):
     """
     Returns True when a string can be converted to an integer without losing information.
     01 -> False
@@ -31,5 +37,5 @@ class IsIntegerString(RegexTest):
     1.0 -> True
     """
 
-    def __init__(self, name: str = "IsIntegerString") -> None:
+    def __init__(self, *, name: str = "IntegerString") -> None:
         super().__init__(name=name, pattern=r"^-?(0|[1-9]\d*)(\.0+)?$")

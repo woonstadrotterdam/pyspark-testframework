@@ -1,11 +1,11 @@
 from .category import ValidCategory
 from .range import ValidNumericRange
-from .regex import IsIntegerString, RegexTest
+from .regex import IntegerString, RegexTest
 from .value import CorrectValue
 
 __all__ = [
     "RegexTest",
-    "IsIntegerString",
+    "IntegerString",
     "ValidNumericRange",
     "ValidCategory",
     "CorrectValue",
