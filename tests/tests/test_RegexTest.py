@@ -1,5 +1,5 @@
 from pyspark.sql.types import StringType, StructField, StructType
-from testframework.tests import RegexTest
+from testframework.tests import RegexTest as RegexTst  # to prevent pytest confusion
 
 
 def test_regex_test_method(spark):
@@ -20,8 +20,8 @@ def test_regex_test_method(spark):
     # Create DataFrame
     df = spark.createDataFrame(data, schema)
 
-    # Instantiate RegexTest
-    regex_test = RegexTest(name="email_test", pattern=r"^[\w\.-]+@[\w\.-]+\.\w+$")
+    # Instantiate RegexTst
+    regex_test = RegexTst(name="email_test", pattern=r"^[\w\.-]+@[\w\.-]+\.\w+$")
 
     # Apply the test
     result_df = regex_test.test(df, col="value", primary_key="id", nullable=True)
@@ -55,7 +55,7 @@ def test_regex_test_no_match(spark):
 
     df = spark.createDataFrame(data, schema)
 
-    regex_test = RegexTest(name="email_test", pattern=r"^[\w\.-]+@[\w\.-]+\.\w+$")
+    regex_test = RegexTst(name="email_test", pattern=r"^[\w\.-]+@[\w\.-]+\.\w+$")
 
     result_df = regex_test.test(df, col="value", primary_key="id", nullable=False)
 
@@ -86,7 +86,7 @@ def test_regex_test_partial_match(spark):
 
     df = spark.createDataFrame(data, schema)
 
-    regex_test = RegexTest(name="domain_test", pattern=r"@example\.com$")
+    regex_test = RegexTst(name="domain_test", pattern=r"@example\.com$")
 
     result_df = regex_test.test(df, col="value", primary_key="id", nullable=False)
 
@@ -118,7 +118,7 @@ def test_regex_test_empty_string(spark):
 
     df = spark.createDataFrame(data, schema)
 
-    regex_test = RegexTest(name="non_empty_test", pattern=r"^.+$")
+    regex_test = RegexTst(name="non_empty_test", pattern=r"^.+$")
 
     result_df = regex_test.test(df, col="value", primary_key="id", nullable=True)
 
@@ -150,9 +150,7 @@ def test_regex_test_special_characters(spark):
 
     df = spark.createDataFrame(data, schema)
 
-    regex_test = RegexTest(
-        name="special_char_test", pattern=r"^[\w\.-]+@[\w\.-]+\.\w+$"
-    )
+    regex_test = RegexTst(name="special_char_test", pattern=r"^[\w\.-]+@[\w\.-]+\.\w+$")
 
     result_df = regex_test.test(df, col="value", primary_key="id", nullable=True)
 

@@ -1,3 +1,5 @@
+# this file is called regex_tst instead of regex_test due to pytest confusion otherwise
+
 from pyspark.sql import Column, DataFrame
 from pyspark.sql import functions as F
 from pyspark.sql.types import StringType
@@ -8,7 +10,7 @@ from testframework.utils.decorators import account_for_nullable, allowed_col_typ
 
 class RegexTest(Test):
     """
-    Test to check if a column's values match a regular expression pattern.
+    Test to check if a column's values matches a regular expression pattern.
     """
 
     def __init__(self, *, name: str, pattern: str) -> None:
@@ -25,17 +27,3 @@ class RegexTest(Test):
 
     def __repr__(self) -> str:
         return f"{self.name}(pattern={self.pattern})"
-
-
-class IntegerString(RegexTest):
-    """
-    Returns True when a string can be converted to an integer without losing information.
-    01 -> False
-    1 -> True
-    -1 -> True
-    1.1 -> False
-    1.0 -> True
-    """
-
-    def __init__(self, *, name: str = "IntegerString") -> None:
-        super().__init__(name=name, pattern=r"^-?(0|[1-9]\d*)(\.0+)?$")
