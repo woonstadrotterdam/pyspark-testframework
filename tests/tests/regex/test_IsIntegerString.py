@@ -1,6 +1,6 @@
 import pytest
 from pyspark.sql import types as T
-from testframework.tests.regex import IsIntegerString
+from testframework.tests import IsIntegerString
 
 test_data = [
     ("01", False, "pk1"),  # Leading zero
