@@ -23,6 +23,12 @@ def test_allowed_col_types_with_valid_column_type(spark):
         def _test_impl(self, df: DataFrame, col: str, nullable: bool) -> Column:
             return lit(True)  # Dummy implementation
 
+        def __str__(self) -> str:
+            return f"{self.name}"
+
+        def __repr__(self) -> str:
+            return f"{self.name}"
+
     schema = StructType([StructField("test_column", StringType(), True)])
     data = [("abc",), ("def",), (None,)]
     df = spark.createDataFrame(data, schema)
@@ -42,6 +48,12 @@ def test_allowed_col_types_with_invalid_column_type(spark):
         @allowed_col_types([StringType])
         def _test_impl(self, df: DataFrame, col: str, nullable: bool) -> Column:
             return lit(True)  # Dummy implementation
+
+        def __str__(self) -> str:
+            return f"{self.name}"
+
+        def __repr__(self) -> str:
+            return f"{self.name}"
 
     schema = StructType([StructField("test_column", IntegerType(), True)])
     data = [(1,), (2,), (None,)]
@@ -63,6 +75,12 @@ def test_allowed_col_types_with_multiple_valid_types(spark):
         def _test_impl(self, df: DataFrame, col: str, nullable: bool) -> Column:
             return lit(True)  # Dummy implementation
 
+        def __str__(self) -> str:
+            return f"{self.name}"
+
+        def __repr__(self) -> str:
+            return f"{self.name}"
+
     schema = StructType([StructField("test_column", IntegerType(), True)])
     data = [(1,), (2,), (None,)]
     df = spark.createDataFrame(data, schema)
@@ -82,6 +100,12 @@ def test_allowed_col_types_with_string_and_integer_columns(spark):
         @allowed_col_types([StringType, IntegerType])
         def _test_impl(self, df: DataFrame, col: str, nullable: bool) -> Column:
             return lit(True)  # Dummy implementation
+
+        def __str__(self) -> str:
+            return f"{self.name}"
+
+        def __repr__(self) -> str:
+            return f"{self.name}"
 
     schema = StructType(
         [
@@ -112,6 +136,12 @@ def test_allowed_col_types_with_no_matching_column_type(spark):
         @allowed_col_types([BooleanType])
         def _test_impl(self, df: DataFrame, col: str, nullable: bool) -> Column:
             return lit(True)  # Dummy implementation
+
+        def __str__(self) -> str:
+            return f"{self.name}"
+
+        def __repr__(self) -> str:
+            return f"{self.name}"
 
     schema = StructType([StructField("test_column", StringType(), True)])
     data = [("abc",), ("def",), (None,)]
