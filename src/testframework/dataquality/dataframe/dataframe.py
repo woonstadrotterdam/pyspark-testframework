@@ -49,7 +49,7 @@ class DataFrameTester:
         Returns:
             DataFrame: The loaded Spark DataFrame.
         """
-        return df.select(cls._get_primary_keys(df))
+        return df.select(cls.potential_primary_keys(df))
 
     def _check_primary_key(self, df: DataFrame) -> DataFrame:
         """
@@ -67,7 +67,7 @@ class DataFrameTester:
         """
         for key in self.primary_key:
             if key not in df.columns:
-                unique_primary_keys = self._get_primary_keys(df)
+                unique_primary_keys = self.potential_primary_keys(df)
                 raise KeyError(
                     f"Primary key column '{key}' is not an existing column in this DataFrame.",
                     f"Unique primary keys in this DataFrame: {unique_primary_keys}. You can also use multiple columns as composite primary key",
@@ -103,14 +103,16 @@ class DataFrameTester:
             logger.error(
                 f"Primary key(s) {primary_key} is not unique ({total_count = }, {distinct_count = }). Determining potential primary keys.."
             )
-            unique_primary_keys = cls._get_primary_keys(df, total_count=total_count)
+            unique_primary_keys = cls.potential_primary_keys(
+                df, total_count=total_count
+            )
             raise ValueError(
                 f"Primary key '{primary_key}' is not unique",
                 f"Unique primary keys in this DataFrame: {unique_primary_keys}. You can also use multiple columns as composite primary key",
             )
 
     @staticmethod
-    def _get_primary_keys(
+    def potential_primary_keys(
         df: DataFrame, total_count: Optional[int] = None
     ) -> list[str]:
         if total_count is None:
