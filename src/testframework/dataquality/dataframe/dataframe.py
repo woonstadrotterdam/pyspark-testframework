@@ -176,7 +176,9 @@ class DataFrameTester:
         if not dummy_run:
             test_name = test.generate_result_col_name(col)
 
-            self.descriptions[test_name] = description if description else test_name
+            self.descriptions[test_name] = (
+                description if description else f"{col}__{test}"
+            )
 
             new_test_results = self.results.drop(test_name)
             new_test_results = new_test_results.join(
