@@ -6,7 +6,7 @@ from pyspark.sql.types import (
     StructField,
     StructType,
 )
-from testframework.dataquality.tests import ValidNumericStringRange
+from testframework.dataquality.dataframe.tests import ValidNumericStringRange
 
 
 @pytest.fixture

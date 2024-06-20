@@ -12,7 +12,7 @@ from pyspark.sql.types import (
     ShortType,
 )
 
-from testframework.base import Test
+from testframework.dataquality._base import Test
 from testframework.utils.decorators import account_for_nullable, allowed_col_types
 
 

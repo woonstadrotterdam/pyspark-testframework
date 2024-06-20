@@ -4,7 +4,7 @@ from pyspark.sql import Column, DataFrame
 from pyspark.sql import functions as F
 from pyspark.sql.types import StringType
 
-from testframework.base import Test
+from testframework.dataquality._base import Test
 from testframework.utils.decorators import account_for_nullable, allowed_col_types
 
 

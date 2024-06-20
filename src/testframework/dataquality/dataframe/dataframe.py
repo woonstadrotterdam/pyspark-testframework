@@ -3,7 +3,7 @@ from typing import Any, Optional, Union
 
 from pyspark.sql import Column, DataFrame, SparkSession
 
-from testframework.base import Test
+from testframework.dataquality._base import Test
 
 logger = logging.getLogger(__name__)
 

@@ -1,7 +1,7 @@
 import pytest
 from pyspark.sql import Row
 from pyspark.sql.types import IntegerType, StringType, StructField, StructType
-from testframework.dataquality.tests import ValidCategory
+from testframework.dataquality.dataframe.tests import ValidCategory
 
 
 @pytest.fixture

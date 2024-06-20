@@ -1,5 +1,5 @@
 from pyspark.sql.types import BooleanType, StringType, StructField, StructType
-from testframework.dataquality.tests.regex_tst import RegexTest
+from testframework.dataquality.dataframe.tests.regex_tst import RegexTest
 
 
 def test_regex_test_method_nullable_false(spark):

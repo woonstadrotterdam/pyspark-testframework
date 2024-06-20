@@ -8,7 +8,7 @@ from pyspark.sql.types import (
     StructField,
     StructType,
 )
-from testframework.base import (
+from testframework.dataquality._base import (
     Test as Tst,  # to prevent pytest from collecting this class
 )
 from testframework.utils.decorators import allowed_col_types

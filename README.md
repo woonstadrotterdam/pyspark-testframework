@@ -85,7 +85,7 @@ df_tester = DataFrameTester(
 **Import configurable tests**
 
 ```python
-from testframework.dataquality.tests import ValidNumericRange, RegexTest
+from testframework.dataquality.dataframe.tests import ValidNumericRange, RegexTest
 ```
 
 **Initialize the `RegexTest` to test for valid street names**

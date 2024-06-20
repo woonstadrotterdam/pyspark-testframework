@@ -1,6 +1,6 @@
 import pytest
 from pyspark.sql import DataFrame, SparkSession
-from testframework.dataquality.tests import (
+from testframework.dataquality.dataframe.tests import (
     CorrectValue,
 )
 
