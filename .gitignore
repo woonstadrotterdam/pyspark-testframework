@@ -163,3 +163,4 @@ cython_debug/
 
 .python-version
 src/testframework/_version.py
+tutorial.md
