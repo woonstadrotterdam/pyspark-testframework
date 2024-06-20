@@ -13,6 +13,7 @@
 ![](https://progress-bar.dev/100/?title=ValidNumericRange&width=72)  
 ![](https://progress-bar.dev/100/?title=ValidCategory&width=95)  
 ![](https://progress-bar.dev/100/?title=CorrectValue&width=102)  
+![](https://progress-bar.dev/100/?title=ValidNumericStringRange&width=36)  
 ![](https://progress-bar.dev/50/?title=ValidEmail&width=113)  
 ![](https://progress-bar.dev/0/?title=ContainsValue&width=95)  
 ![](<https://progress-bar.dev/0/?title=(...)&width=145>)
