@@ -1,4 +1,5 @@
 import logging
+import os
 from typing import Any, Optional, Union
 
 from pyspark.sql import Column, DataFrame, SparkSession
@@ -31,11 +32,14 @@ class DataFrameTester:
         )
         self.df = self._check_primary_key(df)
         self.results: DataFrame = self.df.select(self.primary_key)
-        self.spark = (
-            spark
-            if isinstance(spark, SparkSession)
-            else SparkSession.builder.appName("DataFrameTester").getOrCreate()
-        )
+        if spark is None and "DATABRICKS_RUNTIME_VERSION" in os.environ:
+            self.spark = SparkSession.builder.getOrCreate()
+        else:
+            self.spark = (
+                spark
+                if isinstance(spark, SparkSession)
+                else SparkSession.builder.appName("DataFrameTester").getOrCreate()
+            )
         self.descriptions: dict[str, str] = {}
 
     @classmethod
