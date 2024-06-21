@@ -1,5 +1,4 @@
 import logging
-import os
 from typing import Any, Optional, Union
 
 from pyspark.sql import Column, DataFrame, SparkSession
@@ -18,28 +17,21 @@ class DataFrameTester:
     Args:
         df (DataFrame): The pyspark DataFrame to test.
         primary_key (Union[str, list[str]]): The name of the column(s) used as a primary key. The column should contain only unique values. Rows of which all primary keys are null are deleted.
-        spark (Optional[SparkSession]): The SparkSession to use for the tests. By default, a new SparkSession is created.
+        spark (SparkSession): The SparkSession to use for the tests.
     """
 
     def __init__(
         self,
         df: DataFrame,
         primary_key: Union[str, list[str]],
-        spark: Optional[SparkSession] = None,
+        spark: SparkSession,
     ) -> None:
         self.primary_key = (
             [primary_key] if isinstance(primary_key, str) else primary_key
         )
         self.df = self._check_primary_key(df)
         self.results: DataFrame = self.df.select(self.primary_key)
-        if spark is None and "DATABRICKS_RUNTIME_VERSION" in os.environ:
-            self.spark = SparkSession.builder.getOrCreate()
-        else:
-            self.spark = (
-                spark
-                if isinstance(spark, SparkSession)
-                else SparkSession.builder.appName("DataFrameTester").getOrCreate()
-            )
+        self.spark = spark
         self.descriptions: dict[str, str] = {}
 
     @classmethod
