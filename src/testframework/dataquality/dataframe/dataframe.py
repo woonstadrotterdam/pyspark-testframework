@@ -34,7 +34,7 @@ class DataFrameTester:
         self.spark = (
             spark
             if isinstance(spark, SparkSession)
-            else SparkSession.builder.getOrCreate("DataFrameTester")
+            else SparkSession.builder.appName("DataFrameTester").getOrCreate()
         )
         self.descriptions: dict[str, str] = {}
 
