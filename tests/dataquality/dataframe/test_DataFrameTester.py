@@ -24,6 +24,10 @@ def test_init(sample_df, spark):
     assert tester.primary_key == ["id"]
 
 
+def test_init_no_spark(sample_df):
+    DataFrameTester(df=sample_df, primary_key="id")
+
+
 def test_unique_columns(sample_df, spark):
     unique_df = DataFrameTester.unique_columns(sample_df)
     assert set(unique_df.columns) == {"id", "name", "value"}
