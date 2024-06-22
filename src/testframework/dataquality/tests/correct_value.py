@@ -3,7 +3,7 @@ from typing import Any
 from pyspark.sql import Column, DataFrame
 from pyspark.sql import functions as F
 
-from testframework.base import Test
+from testframework.dataquality._base import Test
 from testframework.utils.decorators import account_for_nullable
 
 

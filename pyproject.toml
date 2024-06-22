@@ -26,17 +26,28 @@ readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.9.5"
 license = {file = "LICENSE"}
 dependencies = [
-    "pyspark>=3.3.4"
+    # pyspark not specified here because it creates conflicts with databricks.
 ]
 
 [project.optional-dependencies]
 test = [
-    "pre-commit==3.7.1",
-    "pytest==8.2.2",
+    "pre-commit==3.*",
+    "pytest==8.*",
+    "pytest-cov==5.*",
+    "pyspark==3.*"
 ]
 dev = [
     "pyspark-testframework[test]",
     "ruff==0.4.8"
+]
+
+[tool.pytest.ini_options]
+addopts = "--cov=testframework --cov-report term --cov-report lcov:lcov.info"
+
+[tool.coverage.run]
+omit = [
+    # omit generated code
+    "src/testframework/_version.py",
 ]
 
 [tool.setuptools_scm]

@@ -1,5 +1,7 @@
 from pyspark.sql.types import StringType, StructField, StructType
-from testframework.tests import RegexTest as RegexTst  # to prevent pytest confusion
+from testframework.dataquality.tests import (
+    RegexTest as RegexTst,  # to prevent pytest confusion
+)
 
 
 def test_regex_test_method(spark):

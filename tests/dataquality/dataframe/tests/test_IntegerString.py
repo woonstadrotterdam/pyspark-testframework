@@ -1,6 +1,6 @@
 import pytest
 from pyspark.sql import types as T
-from testframework.tests import IntegerString
+from testframework.dataquality.tests import IntegerString
 
 test_data = [
     ("01", False, "pk1"),  # Leading zero

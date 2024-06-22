@@ -5,7 +5,7 @@ import pyspark.sql.functions as F
 from pyspark.sql import Column, DataFrame
 from pyspark.sql.types import DataType
 
-from testframework.base import Test
+from testframework.dataquality._base import Test
 
 
 def account_for_nullable(
