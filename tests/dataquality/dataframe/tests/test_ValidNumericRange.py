@@ -9,7 +9,7 @@ from pyspark.sql.types import (
     StructField,
     StructType,
 )
-from testframework.dataquality.dataframe.tests import ValidNumericRange
+from testframework.dataquality.tests import ValidNumericRange
 
 
 @pytest.mark.parametrize(

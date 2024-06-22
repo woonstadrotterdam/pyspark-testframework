@@ -1,5 +1,5 @@
 from pyspark.sql.types import StringType, StructField, StructType
-from testframework.dataquality.dataframe.tests import (
+from testframework.dataquality.tests import (
     RegexTest as RegexTst,  # to prevent pytest confusion
 )
 

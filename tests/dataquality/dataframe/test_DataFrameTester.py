@@ -1,7 +1,7 @@
 import pytest
 from pyspark.sql.functions import col
 from testframework.dataquality.dataframe import DataFrameTester
-from testframework.dataquality.dataframe.tests import ValidNumericRange
+from testframework.dataquality.tests import ValidNumericRange
 
 
 @pytest.fixture(scope="module")

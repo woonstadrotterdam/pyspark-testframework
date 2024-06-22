@@ -6,10 +6,10 @@ from .valid_numeric_range import ValidNumericRange
 from .valid_numeric_string_range import ValidNumericStringRange
 
 __all__ = [
-    "RegexTest",
-    "IntegerString",
-    "ValidNumericRange",
-    "ValidCategory",
     "CorrectValue",
+    "IntegerString",
+    "RegexTest",
+    "ValidCategory",
+    "ValidNumericRange",
     "ValidNumericStringRange",
 ]

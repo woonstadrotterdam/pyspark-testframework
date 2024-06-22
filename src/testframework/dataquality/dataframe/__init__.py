@@ -1,3 +1,3 @@
-from .dataframe import DataFrameTester
+from .dataframe_tester import DataFrameTester
 
 __all__ = ["DataFrameTester"]
