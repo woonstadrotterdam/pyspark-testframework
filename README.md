@@ -79,7 +79,7 @@ from testframework.dataquality import DataFrameTester
 df_tester = DataFrameTester(
     df=df,
     primary_key="primary_key",
-    spark=spark,  # optional. If not provided, a new Spark session will be created
+    spark=spark,
 )
 ```
 
@@ -98,7 +98,7 @@ valid_street_name = RegexTest(
 )
 ```
 
-**Run `valid_street_name` on the _email_ column using the `.test()` method of `DataFrameTester`.**
+**Run `valid_street_name` on the _street_ column using the `.test()` method of `DataFrameTester`.**
 
 ```python
 df_tester.test(
