@@ -397,22 +397,46 @@ class DataFrameTester:
         Returns:
             DataFrame: A DataFrame containing only the rows where no test has failed.
         """
-        return self.results.filter(
-            ~F.array_contains(
-                F.array([F.col(col) for col in self.results.columns[1:]]), False
-            )
-        )
+        conditions = [
+            F.col(col) != F.lit(False)
+            for col in self.results.columns[1:]
+            if isinstance(self.results.schema[col].dataType, BooleanType)
+        ]
+
+        # If there are no boolean columns, return all rows
+        if not conditions:
+            return self.results
+
+        combined_condition = conditions[0]
+
+        if len(conditions) > 1:
+            for condition in conditions[1:]:
+                combined_condition = combined_condition | condition
+
+        return self.results.filter(combined_condition)
 
     @property
     def failed_tests(self) -> DataFrame:
         """
-        Returns a DataFrame containing only the rows where any test has failed.
+        Returns a DataFrame containing only the rows where any test has failed (at least one value is False).
 
         Returns:
             DataFrame: A DataFrame containing only the rows where any test has failed.
         """
-        return self.results.filter(
-            F.array_contains(
-                F.array([F.col(col) for col in self.results.columns[1:]]), False
-            )
-        )
+        conditions = [
+            F.col(col) == F.lit(False)
+            for col in self.results.columns[1:]
+            if isinstance(self.results.schema[col].dataType, BooleanType)
+        ]
+
+        # If there are no boolean columns, return an empty DataFrame
+        if not conditions:
+            return self.results.limit(0)
+
+        combined_condition = conditions[0]
+
+        if len(conditions) > 1:
+            for condition in conditions[1:]:
+                combined_condition = combined_condition | condition
+
+        return self.results.filter(combined_condition)
