@@ -34,7 +34,7 @@ from pyspark.sql import functions as F
 
 ```python
 # Initialize Spark session
-spark = SparkSession.builder.appName("CreateDataFrame").getOrCreate()
+spark = SparkSession.builder.appName("PySparkTestFrameworkTutorial").getOrCreate()
 
 # Define the schema
 schema = StructType(
@@ -59,6 +59,11 @@ df = spark.createDataFrame(data, schema)
 df.show(truncate=False)
 ```
 
+    Setting default log level to "WARN".
+    To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+
+
+    24/08/12 11:17:48 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
     +-----------+--------------------+------------+
     |primary_key|street              |house_number|
     +-----------+--------------------+------------+
@@ -229,7 +234,7 @@ Let's create a boolean column that indicates whether the house has a bath room o
 
 ```python
 house_has_bath_room = room_df.groupBy("primary_key").agg(
-    F.max(F.when(F.col("room") == "bath room", 1).otherwise(0)).alias("has_bath_room")
+    F.max(F.when(F.col("room") == "bath room", True).otherwise(False)).alias("has_bath_room")
 )
 
 house_has_bath_room.show(truncate=False)
@@ -238,8 +243,8 @@ house_has_bath_room.show(truncate=False)
     +-----------+-------------+
     |primary_key|has_bath_room|
     +-----------+-------------+
-    |1          |1            |
-    |2          |0            |
+    |1          |true         |
+    |2          |false        |
     +-----------+-------------+
 
 **We can add this 'custom test' to the `DataFrameTester` using `add_custom_test_result`.**
@@ -258,8 +263,8 @@ df_tester.add_custom_test_result(
     +-----------+-------------+
     |primary_key|has_bath_room|
     +-----------+-------------+
-    |1          |1            |
-    |2          |0            |
+    |1          |true         |
+    |2          |false        |
     |3          |null         |
     |4          |null         |
     |5          |null         |
@@ -274,8 +279,8 @@ df_tester.results.show(truncate=False)
     +-----------+-----------------------+-------------------------------+-------------+
     |primary_key|street__ValidStreetName|house_number__ValidNumericRange|has_bath_room|
     +-----------+-----------------------+-------------------------------+-------------+
-    |1          |true                   |true                           |1            |
-    |2          |true                   |true                           |0            |
+    |1          |true                   |true                           |true         |
+    |2          |true                   |true                           |false        |
     |3          |false                  |true                           |null         |
     |4          |true                   |false                          |null         |
     |5          |false                  |true                           |null         |
@@ -288,3 +293,17 @@ df_tester.descriptions
     {'street__ValidStreetName': 'street contains valid Dutch street name.',
      'house_number__ValidNumericRange': 'house_number__ValidNumericRange(min_value=0.0, max_value=inf)',
      'has_bath_room': 'House has a bath room'}
+
+**We can also get a summary of the test results using the `.summary` attribute.**
+
+```python
+df_tester.summary.show(truncate=False)
+```
+
+    +-------------------------------+-------------------------------------------------------------+-------+--------+-----------------+--------+-----------------+
+    |test                           |description                                                  |n_tests|n_passed|percentage_passed|n_failed|percentage_failed|
+    +-------------------------------+-------------------------------------------------------------+-------+--------+-----------------+--------+-----------------+
+    |street__ValidStreetName        |street contains valid Dutch street name.                     |5      |3.0     |60.0             |2.0     |40.0             |
+    |house_number__ValidNumericRange|house_number__ValidNumericRange(min_value=0.0, max_value=inf)|5      |4.0     |80.0             |1.0     |20.0             |
+    |has_bath_room                  |House has a bath room                                        |2      |1.0     |50.0             |1.0     |50.0             |
+    +-------------------------------+-------------------------------------------------------------+-------+--------+-----------------+--------+-----------------+
