@@ -288,6 +288,31 @@ class DataFrameTester:
 
     @property
     def summary(self) -> DataFrame:
+        """
+        Generate a summary DataFrame that provides insights into the test results stored in the `results` DataFrame.
+
+        The summary includes:
+        - The number of tests (`n_tests`) conducted for each column.
+        - For Boolean columns:
+            - The number of passed tests (`n_passed`).
+            - The percentage of passed tests (`percentage_passed`).
+            - The number of failed tests (`n_failed`).
+            - The percentage of failed tests (`percentage_failed`).
+        - Non-Boolean columns are excluded from the pass/fail calculations.
+
+        Returns:
+            DataFrame: A Spark DataFrame containing the summary statistics for each test column. The DataFrame has the following schema:
+                - `test`: The name of the test/column.
+                - `description`: A description of the test/column (if available).
+                - `n_tests`: The number of non-null entries for the test/column.
+                - `n_passed`: The number of entries that passed the test (only for Boolean columns).
+                - `percentage_passed`: The percentage of passed tests (only for Boolean columns).
+                - `n_failed`: The number of entries that failed the test (only for Boolean columns).
+                - `percentage_failed`: The percentage of failed tests (only for Boolean columns).
+
+        If there are no test results, returns an empty DataFrame with the appropriate schema.
+        """
+
         df = self.results
 
         test_columns = df.columns[1:]  # Exclude the first column
@@ -363,3 +388,31 @@ class DataFrameTester:
 
         # Create DataFrame from the summary data
         return self.spark.createDataFrame(summary_data, schema)
+
+    @property
+    def passed_tests(self) -> DataFrame:
+        """
+        Returns a DataFrame containing only the rows where no test has failed (no value is False).
+
+        Returns:
+            DataFrame: A DataFrame containing only the rows where no test has failed.
+        """
+        return self.results.filter(
+            ~F.array_contains(
+                F.array([F.col(col) for col in self.results.columns[1:]]), False
+            )
+        )
+
+    @property
+    def failed_tests(self) -> DataFrame:
+        """
+        Returns a DataFrame containing only the rows where any test has failed.
+
+        Returns:
+            DataFrame: A DataFrame containing only the rows where any test has failed.
+        """
+        return self.results.filter(
+            F.array_contains(
+                F.array([F.col(col) for col in self.results.columns[1:]]), False
+            )
+        )
