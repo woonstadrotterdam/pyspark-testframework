@@ -246,3 +246,17 @@ def test_summary_empty_df(spark):
 
     # Expect no rows in the summary DataFrame for an empty input DataFrame
     assert summary_df.count() == 0
+
+
+def test_passed_tests(sample_df, spark):
+    tester = DataFrameTester(df=sample_df, primary_key="id", spark=spark)
+    tester.test(col="value", test=ValidNumericRange(min_value=11), nullable=True)
+
+    assert tester.passed_tests.count() == 3
+
+
+def test_failed_tests(sample_df, spark):
+    tester = DataFrameTester(df=sample_df, primary_key="id", spark=spark)
+    tester.test(col="value", test=ValidNumericRange(min_value=11), nullable=True)
+
+    assert tester.failed_tests.count() == 1

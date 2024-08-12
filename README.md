@@ -304,3 +304,30 @@ df_tester.summary.show(truncate=False)
     |house_number__ValidNumericRange|house_number__ValidNumericRange(min_value=0.0, max_value=inf)|5      |4       |80.0             |1       |20.0             |
     |has_bath_room                  |House has a bath room                                        |2      |1       |50.0             |1       |50.0             |
     +-------------------------------+-------------------------------------------------------------+-------+--------+-----------------+--------+-----------------+
+
+**If you want to see all rows that failed any of the tests, you can use the `.failed_tests` attribute.**
+
+```python
+df_tester.failed_tests.show(truncate=False)
+```
+
+    +-----------+-----------------------+-------------------------------+-------------+
+    |primary_key|street__ValidStreetName|house_number__ValidNumericRange|has_bath_room|
+    +-----------+-----------------------+-------------------------------+-------------+
+    |2          |true                   |true                           |false        |
+    |3          |false                  |true                           |null         |
+    |4          |true                   |false                          |null         |
+    |5          |false                  |true                           |null         |
+    +-----------+-----------------------+-------------------------------+-------------+
+
+**Of course, you can also see all rows that passed all tests using the `.passed_tests` attribute.**
+
+```python
+df_tester.passed_tests.show(truncate=False)
+```
+
+    +-----------+-----------------------+-------------------------------+-------------+
+    |primary_key|street__ValidStreetName|house_number__ValidNumericRange|has_bath_room|
+    +-----------+-----------------------+-------------------------------+-------------+
+    |1          |true                   |true                           |true         |
+    +-----------+-----------------------+-------------------------------+-------------+
