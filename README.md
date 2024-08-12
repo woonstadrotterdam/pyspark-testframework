@@ -59,11 +59,6 @@ df = spark.createDataFrame(data, schema)
 df.show(truncate=False)
 ```
 
-    Setting default log level to "WARN".
-    To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
-
-
-    24/08/12 11:59:24 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
     +-----------+--------------------+------------+
     |primary_key|street              |house_number|
     +-----------+--------------------+------------+
