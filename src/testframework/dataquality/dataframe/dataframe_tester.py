@@ -316,8 +316,8 @@ class DataFrameTester:
                 # Perform aggregations in a single pass
                 agg_df = df.agg(n_passed_expr, n_failed_expr).collect()[0]
 
-                n_passed = float(agg_df[f"{col_name}_n_passed"])
-                n_failed = float(agg_df[f"{col_name}_n_failed"])
+                n_passed = agg_df[f"{col_name}_n_passed"]
+                n_failed = agg_df[f"{col_name}_n_failed"]
 
                 percentage_passed = (
                     round(n_passed / n_tests * 100, 2) if n_tests > 0 else 0.0
@@ -327,10 +327,10 @@ class DataFrameTester:
                 )
             else:
                 # If not Boolean, skip n_passed and n_failed calculations
-                n_passed = float("nan")
-                n_failed = float("nan")
-                percentage_passed = float("nan")
-                percentage_failed = float("nan")
+                n_passed = None
+                n_failed = None
+                percentage_passed = None
+                percentage_failed = None
 
             summary_data.append(
                 (
@@ -350,9 +350,9 @@ class DataFrameTester:
                 StructField("test", StringType(), True),
                 StructField("description", StringType(), True),
                 StructField("n_tests", LongType(), True),
-                StructField("n_passed", DoubleType(), True),
+                StructField("n_passed", LongType(), True),
                 StructField("percentage_passed", DoubleType(), True),
-                StructField("n_failed", DoubleType(), True),
+                StructField("n_failed", LongType(), True),
                 StructField("percentage_failed", DoubleType(), True),
             ]
         )
