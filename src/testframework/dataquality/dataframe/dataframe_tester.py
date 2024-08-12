@@ -2,6 +2,15 @@ import logging
 from typing import Any, Optional, Union
 
 from pyspark.sql import Column, DataFrame, SparkSession
+from pyspark.sql import functions as F
+from pyspark.sql.types import (
+    BooleanType,
+    DoubleType,
+    LongType,
+    StringType,
+    StructField,
+    StructType,
+)
 
 from testframework.dataquality._base import Test
 
@@ -276,3 +285,81 @@ class DataFrameTester:
             )
 
         return self.results.select(*self.primary_key, name)
+
+    @property
+    def summary(self) -> DataFrame:
+        df = self.results
+
+        test_columns = df.columns[1:]  # Exclude the first column
+
+        # Initialize an empty list to collect summary data
+        summary_data = []
+
+        for col_name in test_columns:
+            is_boolean = isinstance(df.schema[col_name].dataType, BooleanType)
+
+            # Always calculate n_tests
+            n_tests_expr = F.count(
+                F.when(F.col(col_name).isNotNull(), F.col(col_name))
+            ).alias(f"{col_name}_n_tests")
+            n_tests = df.agg(n_tests_expr).collect()[0][f"{col_name}_n_tests"]
+
+            # Conditionally calculate n_passed and n_failed only if the column is Boolean
+            if is_boolean:
+                n_passed_expr = F.count(F.when(F.col(col_name), F.col(col_name))).alias(
+                    f"{col_name}_n_passed"
+                )
+                n_failed_expr = F.count(
+                    F.when(~F.col(col_name), F.col(col_name))
+                ).alias(f"{col_name}_n_failed")
+
+                # Perform aggregations in a single pass
+                agg_df = df.agg(n_passed_expr, n_failed_expr).collect()[0]
+
+                n_passed = float(agg_df[f"{col_name}_n_passed"])
+                n_failed = float(agg_df[f"{col_name}_n_failed"])
+
+                percentage_passed = (
+                    round(n_passed / n_tests * 100, 2) if n_tests > 0 else 0.0
+                )
+                percentage_failed = (
+                    round(n_failed / n_tests * 100, 2) if n_tests > 0 else 0.0
+                )
+            else:
+                # If not Boolean, skip n_passed and n_failed calculations
+                n_passed = float("nan")
+                n_failed = float("nan")
+                percentage_passed = float("nan")
+                percentage_failed = float("nan")
+
+            summary_data.append(
+                (
+                    col_name,
+                    self.descriptions.get(col_name, ""),
+                    n_tests,
+                    n_passed,
+                    percentage_passed,
+                    n_failed,
+                    percentage_failed,
+                )
+            )
+
+        # Define the schema explicitly
+        schema = StructType(
+            [
+                StructField("test", StringType(), True),
+                StructField("description", StringType(), True),
+                StructField("n_tests", LongType(), True),
+                StructField("n_passed", DoubleType(), True),
+                StructField("percentage_passed", DoubleType(), True),
+                StructField("n_failed", DoubleType(), True),
+                StructField("percentage_failed", DoubleType(), True),
+            ]
+        )
+
+        # If summary_data is empty, return an empty DataFrame with the defined schema
+        if not summary_data:
+            return self.spark.createDataFrame([], schema)
+
+        # Create DataFrame from the summary data
+        return self.spark.createDataFrame(summary_data, schema)
