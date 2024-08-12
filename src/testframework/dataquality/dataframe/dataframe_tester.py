@@ -1,4 +1,5 @@
 import logging
+from functools import reduce
 from typing import Any, Optional, Union
 
 from pyspark.sql import Column, DataFrame, SparkSession
@@ -407,11 +408,7 @@ class DataFrameTester:
         if not conditions:
             return self.results
 
-        combined_condition = conditions[0]
-
-        if len(conditions) > 1:
-            for condition in conditions[1:]:
-                combined_condition = combined_condition | condition
+        combined_condition = reduce(lambda x, y: x | y, conditions)
 
         return self.results.filter(combined_condition)
 
@@ -433,10 +430,6 @@ class DataFrameTester:
         if not conditions:
             return self.results.limit(0)
 
-        combined_condition = conditions[0]
-
-        if len(conditions) > 1:
-            for condition in conditions[1:]:
-                combined_condition = combined_condition | condition
+        combined_condition = reduce(lambda x, y: x | y, conditions)
 
         return self.results.filter(combined_condition)
