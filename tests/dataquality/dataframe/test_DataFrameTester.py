@@ -1,5 +1,6 @@
 import pytest
 from pyspark.sql.functions import col
+from pyspark.sql.types import BooleanType, IntegerType, StructField, StructType
 from testframework.dataquality.dataframe import DataFrameTester
 from testframework.dataquality.tests import ValidNumericRange
 
@@ -203,3 +204,45 @@ def test_add_custom_test_result_invalid_description_type(sample_df, spark):
         tester.add_custom_test_result(
             result=invalid_test_result, name="custom_test", description=123
         )
+
+
+def test_summary(sample_df, spark):
+    tester = DataFrameTester(df=sample_df, primary_key="id", spark=spark)
+    tester.test(col="value", test=ValidNumericRange(min_value=21), nullable=True)
+    summary_df = tester.summary
+
+    # Check the structure of the summary DataFrame
+    assert set(summary_df.columns) == {
+        "test",
+        "description",
+        "n_tests",
+        "n_passed",
+        "percentage_passed",
+        "n_failed",
+        "percentage_failed",
+    }
+
+    summary_data = {row["test"]: row for row in summary_df.collect()}
+
+    # Verify the summary for the boolean column
+    test_bool_summary = summary_data["value__ValidNumericRange"]
+    assert test_bool_summary["n_tests"] == 4
+    assert test_bool_summary["n_passed"] == 2
+    assert test_bool_summary["n_failed"] == 2
+    assert test_bool_summary["percentage_passed"] == 50.0
+    assert test_bool_summary["percentage_failed"] == 50.0
+
+
+def test_summary_empty_df(spark):
+    schema = StructType(
+        [
+            StructField("id", IntegerType(), True),
+            StructField("test_bool", BooleanType(), True),
+        ]
+    )
+    empty_df = spark.createDataFrame([], schema)
+    tester = DataFrameTester(df=empty_df, primary_key="id", spark=spark)
+    summary_df = tester.summary
+
+    # Expect no rows in the summary DataFrame for an empty input DataFrame
+    assert summary_df.count() == 0
