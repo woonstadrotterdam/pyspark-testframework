@@ -63,7 +63,7 @@ df.show(truncate=False)
     To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
 
 
-    24/08/12 11:17:48 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+    24/08/12 11:59:24 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
     +-----------+--------------------+------------+
     |primary_key|street              |house_number|
     +-----------+--------------------+------------+
@@ -234,7 +234,9 @@ Let's create a boolean column that indicates whether the house has a bath room o
 
 ```python
 house_has_bath_room = room_df.groupBy("primary_key").agg(
-    F.max(F.when(F.col("room") == "bath room", True).otherwise(False)).alias("has_bath_room")
+    F.max(F.when(F.col("room") == "bath room", True).otherwise(False)).alias(
+        "has_bath_room"
+    )
 )
 
 house_has_bath_room.show(truncate=False)
@@ -303,7 +305,7 @@ df_tester.summary.show(truncate=False)
     +-------------------------------+-------------------------------------------------------------+-------+--------+-----------------+--------+-----------------+
     |test                           |description                                                  |n_tests|n_passed|percentage_passed|n_failed|percentage_failed|
     +-------------------------------+-------------------------------------------------------------+-------+--------+-----------------+--------+-----------------+
-    |street__ValidStreetName        |street contains valid Dutch street name.                     |5      |3.0     |60.0             |2.0     |40.0             |
-    |house_number__ValidNumericRange|house_number__ValidNumericRange(min_value=0.0, max_value=inf)|5      |4.0     |80.0             |1.0     |20.0             |
-    |has_bath_room                  |House has a bath room                                        |2      |1.0     |50.0             |1.0     |50.0             |
+    |street__ValidStreetName        |street contains valid Dutch street name.                     |5      |3       |60.0             |2       |40.0             |
+    |house_number__ValidNumericRange|house_number__ValidNumericRange(min_value=0.0, max_value=inf)|5      |4       |80.0             |1       |20.0             |
+    |has_bath_room                  |House has a bath room                                        |2      |1       |50.0             |1       |50.0             |
     +-------------------------------+-------------------------------------------------------------+-------+--------+-----------------+--------+-----------------+
