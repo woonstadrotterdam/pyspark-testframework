@@ -260,3 +260,31 @@ def test_failed_tests(sample_df, spark):
     tester.test(col="value", test=ValidNumericRange(min_value=11), nullable=True)
 
     assert tester.failed_tests.count() == 1
+
+
+def test_return_failed_rows(sample_df, spark):
+    tester = DataFrameTester(df=sample_df, primary_key="id", spark=spark)
+    test_result = tester.test(
+        col="value",
+        test=ValidNumericRange(min_value=11),
+        nullable=True,
+        return_failed_rows=True,
+    )
+    assert test_result.count() == 1
+
+
+def test_return_failed_rows_custom_test(sample_df, spark):
+    tester = DataFrameTester(df=sample_df, primary_key="id", spark=spark)
+    custom_test_data = [(1, True), (2, False), (3, True), (4, False)]
+    custom_test_columns = ["id", "custom_test"]
+    custom_test_result = spark.createDataFrame(custom_test_data, custom_test_columns)
+
+    updated_results = tester.add_custom_test_result(
+        result=custom_test_result,
+        name="custom_test",
+        description="This is a custom test",
+        fillna_value=False,
+        return_failed_rows=True,
+    )
+
+    assert updated_results.count() == 2
