@@ -329,8 +329,4 @@ df_tester.passed_tests.show(truncate=False)
     |primary_key|street__ValidStreetName|house_number__ValidNumericRange|has_bath_room|
     +-----------+-----------------------+-------------------------------+-------------+
     |1          |true                   |true                           |true         |
-    |2          |true                   |true                           |false        |
-    |3          |false                  |true                           |null         |
-    |4          |true                   |false                          |null         |
-    |5          |false                  |true                           |null         |
     +-----------+-----------------------+-------------------------------+-------------+
