@@ -131,7 +131,7 @@ df_tester.test(
     ),
     nullable=True,  # nullable, hence null values are converted to True
     # description is optional, let's not define it for illustration purposes
-    return_failed_rows=True # only return the failed rows
+    return_failed_rows=True,  # only return the failed rows
 ).show()
 ```
 
@@ -329,8 +329,4 @@ df_tester.passed_tests.show(truncate=False)
     |primary_key|street__ValidStreetName|house_number__ValidNumericRange|has_bath_room|
     +-----------+-----------------------+-------------------------------+-------------+
     |1          |true                   |true                           |true         |
-    |2          |true                   |true                           |false        |
-    |3          |false                  |true                           |null         |
-    |4          |true                   |false                          |null         |
-    |5          |false                  |true                           |null         |
     +-----------+-----------------------+-------------------------------+-------------+
