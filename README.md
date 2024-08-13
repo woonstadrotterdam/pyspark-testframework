@@ -121,6 +121,8 @@ df_tester.test(
 
 **Run the `IntegerString` test on the _number_ column**
 
+By setting the `return_failed_rows` parameter to `True`, we can get only the rows that failed the test.
+
 ```python
 df_tester.test(
     col="house_number",
@@ -129,17 +131,14 @@ df_tester.test(
     ),
     nullable=True,  # nullable, hence null values are converted to True
     # description is optional, let's not define it for illustration purposes
+    return_failed_rows=True # only return the failed rows
 ).show()
 ```
 
     +-----------+------------+-------------------------------+
     |primary_key|house_number|house_number__ValidNumericRange|
     +-----------+------------+-------------------------------+
-    |          1|          27|                           true|
-    |          2|          31|                           true|
-    |          3|          27|                           true|
     |          4|          -3|                          false|
-    |          5|          13|                           true|
     +-----------+------------+-------------------------------+
 
 **Let's take a look at the test results of the DataFrame using the `.results` attribute.**
@@ -330,4 +329,8 @@ df_tester.passed_tests.show(truncate=False)
     |primary_key|street__ValidStreetName|house_number__ValidNumericRange|has_bath_room|
     +-----------+-----------------------+-------------------------------+-------------+
     |1          |true                   |true                           |true         |
+    |2          |true                   |true                           |false        |
+    |3          |false                  |true                           |null         |
+    |4          |true                   |false                          |null         |
+    |5          |false                  |true                           |null         |
     +-----------+-----------------------+-------------------------------+-------------+

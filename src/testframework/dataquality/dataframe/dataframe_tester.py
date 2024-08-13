@@ -138,6 +138,7 @@ class DataFrameTester:
         filter_rows: Optional[Column] = None,
         return_extra_cols: Optional[list[str]] = None,
         dummy_run: bool = False,
+        return_failed_rows: bool = False,
     ) -> DataFrame:
         """
         Executes a specific test on a given column of the DataFrame.
@@ -150,6 +151,7 @@ class DataFrameTester:
             filter_rows (Optional[Column]): Uses df.filter(filter_rows) to filter rows for which the test doesn't apply.
             return_extra_cols (Optional[list[str]]): Return extra columns from the original dataframe. Defaults to None.
             dummy_run (bool): If True, perform a dummy run without saving results. Defaults to False.
+            return_failed_rows (bool): If True, return only the rows where the test has failed. Defaults to False.
 
         Returns:
             DataFrame: The test results as a DataFrame.
@@ -194,6 +196,9 @@ class DataFrameTester:
             )
             self.results = new_test_results
 
+        if return_failed_rows:
+            test_result = test_result.filter(F.col(test_name) == F.lit(False))
+
         if return_extra_cols:
             return test_result.join(
                 self.df.select(*self.primary_key, *return_extra_cols),
@@ -222,6 +227,7 @@ class DataFrameTester:
         description: Optional[str] = None,
         fillna_value: Optional[Any] = None,
         return_extra_cols: Optional[list[str]] = None,
+        return_failed_rows: bool = False,
     ) -> DataFrame:
         """
         Adds custom test results to the test DataFrame.
@@ -232,6 +238,7 @@ class DataFrameTester:
             description (Optional[str]): Description of the test for reporting purposes.
             fillna_value (Optional[Any]): The value to fill nulls in the test result column after left joining on the primary_key. Defaults to None.
             return_extra_cols (Optional[list[str]]): Return extra columns from the original dataframe. Defaults to None.
+            return_failed_rows (bool): If True, return only the rows where the test has failed. Defaults to False.
 
         Returns:
             DataFrame: The updated test DataFrame with the custom test results.
@@ -278,14 +285,17 @@ class DataFrameTester:
 
         self.results = new_test_results
 
+        if return_failed_rows:
+            new_test_results = new_test_results.filter(F.col(name) == F.lit(False))
+
         if return_extra_cols:
-            return self.results.select(*self.primary_key, name).join(
+            return new_test_results.select(*self.primary_key, name).join(
                 self.df.select(*self.primary_key, *return_extra_cols),
                 on=self.primary_key,
                 how="left",
             )
 
-        return self.results.select(*self.primary_key, name)
+        return new_test_results.select(*self.primary_key, name)
 
     @property
     def summary(self) -> DataFrame:
