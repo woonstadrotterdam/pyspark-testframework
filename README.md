@@ -104,7 +104,7 @@ valid_street_name = RegexTest(
 df_tester.test(
     col="street",
     test=valid_street_name,
-    nullable=False,  # nullable, hence null values are converted to True
+    nullable=False,  # nullable is False, hence null values are converted to False
     description="street contains valid Dutch street name.",
 ).show(truncate=False)
 ```
