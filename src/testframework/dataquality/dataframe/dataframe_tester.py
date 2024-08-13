@@ -408,7 +408,7 @@ class DataFrameTester:
         if not conditions:
             return self.results
 
-        combined_condition = reduce(lambda x, y: x | y, conditions)
+        combined_condition = reduce(lambda x, y: x & y, conditions)
 
         return self.results.filter(combined_condition)
 
