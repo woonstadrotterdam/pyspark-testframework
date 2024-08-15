@@ -42,6 +42,7 @@ def test_notnull(spark, sample_df):
 def test_notnull_nullable_true_raises_error(spark, sample_df):
     test = NotNull()
     with pytest.raises(
-        ValueError, match="Nullable is True doesn't make sense for NotNull test"
+        ValueError,
+        match="Nullable is True doesn't make sense for NotNull test. Please use nullable=False",
     ):
         test.test(sample_df, "name", primary_key="id", nullable=True)

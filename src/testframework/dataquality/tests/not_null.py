@@ -14,7 +14,9 @@ class NotNull(Test):
 
     def _test_impl(self, df: DataFrame, col: str, nullable: bool) -> Column:
         if nullable is True:
-            raise ValueError("Nullable is True doesn't make sense for NotNull test")
+            raise ValueError(
+                "Nullable is True doesn't make sense for NotNull test. Please use nullable=False"
+            )
 
         return F.col(col).isNotNull()
 
