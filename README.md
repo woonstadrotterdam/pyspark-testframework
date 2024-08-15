@@ -6,18 +6,6 @@
 
 # pyspark-testframework
 
-⏳ **Work in progress**
-
-![](https://progress-bar.dev/100/?title=RegexTest&width=120)  
-![](https://progress-bar.dev/100/?title=IsIntegerString&width=83)  
-![](https://progress-bar.dev/100/?title=ValidNumericRange&width=72)  
-![](https://progress-bar.dev/100/?title=ValidCategory&width=95)  
-![](https://progress-bar.dev/100/?title=CorrectValue&width=102)  
-![](https://progress-bar.dev/100/?title=ValidNumericStringRange&width=36)  
-![](https://progress-bar.dev/50/?title=ValidEmail&width=113)  
-![](https://progress-bar.dev/0/?title=ContainsValue&width=95)  
-![](<https://progress-bar.dev/0/?title=(...)&width=145>)
-
 The goal of the `pyspark-testframework` is to provide a simple way to create tests for PySpark DataFrames. The test results are returned in DataFrame format as well.
 
 # Tutorial
