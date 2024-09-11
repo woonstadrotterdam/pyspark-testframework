@@ -409,7 +409,7 @@ class DataFrameTester:
             DataFrame: A DataFrame containing only the rows where no test has failed.
         """
         conditions = [
-            F.col(col) != F.lit(False)
+            (F.col(col) != F.lit(False) | F.col(col).isNull())
             for col in self.results.columns[1:]
             if isinstance(self.results.schema[col].dataType, BooleanType)
         ]
