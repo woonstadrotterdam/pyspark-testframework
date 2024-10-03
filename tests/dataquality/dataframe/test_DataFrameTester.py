@@ -7,7 +7,13 @@ from testframework.dataquality.tests import ValidNumericRange
 
 @pytest.fixture(scope="module")
 def sample_df(spark):
-    data = [(1, "Alice", 10), (2, "Bob", 20), (3, "Cathy", 30), (4, "David", 40)]
+    data = [
+        (1, "Alice", 10),
+        (2, "Bob", 20),
+        (3, "Cathy", 30),
+        (4, "David", 40),
+        (5, "Eve", None),
+    ]
     columns = ["id", "name", "value"]
     return spark.createDataFrame(data, columns)
 
@@ -21,7 +27,7 @@ def duplicate_key_df(spark):
 
 def test_init(sample_df, spark):
     tester = DataFrameTester(df=sample_df, primary_key="id", spark=spark)
-    assert tester.df.count() == 4
+    assert tester.df.count() == 5
     assert tester.primary_key == ["id"]
 
 
@@ -32,7 +38,7 @@ def test_unique_columns(sample_df, spark):
 
 def test_check_primary_key(sample_df, spark):
     tester = DataFrameTester(df=sample_df, primary_key="id", spark=spark)
-    assert tester.df.count() == 4
+    assert tester.df.count() == 5
 
 
 def test_check_primary_key_error(duplicate_key_df, spark):
@@ -59,7 +65,7 @@ def test_test_method(sample_df, spark):
     valid_numeric_range = ValidNumericRange(min_value=30)
     result_df = tester.test(col="value", test=valid_numeric_range, nullable=True)
     assert "value__ValidNumericRange" in result_df.columns
-    assert result_df.filter(result_df["value__ValidNumericRange"]).count() == 2
+    assert result_df.filter(result_df["value__ValidNumericRange"]).count() == 3
 
 
 def test_test_method_with_filter(sample_df, spark):
@@ -84,8 +90,8 @@ def test_test_method_with_return_extra_cols(sample_df, spark):
     )
     assert "value__ValidNumericRange" in result_df.columns
     assert "name" in result_df.columns
-    assert result_df.filter(result_df["value__ValidNumericRange"]).count() == 2
-    assert result_df.filter(result_df["name"].isNotNull()).count() == 4
+    assert result_df.filter(result_df["value__ValidNumericRange"]).count() == 3
+    assert result_df.filter(result_df["name"].isNotNull()).count() == 5
 
 
 def test_test_method_with_dummy_run(sample_df, spark):
@@ -95,7 +101,7 @@ def test_test_method_with_dummy_run(sample_df, spark):
         col="value", test=valid_numeric_range, nullable=True, dummy_run=True
     )
     assert "value__ValidNumericRange" in result_df.columns
-    assert result_df.filter(result_df["value__ValidNumericRange"]).count() == 2
+    assert result_df.filter(result_df["value__ValidNumericRange"]).count() == 3
     assert "value__ValidNumericRange" not in tester.results.columns
 
 
@@ -131,7 +137,7 @@ def test_add_custom_test_result(sample_df, spark):
     assert "custom_test" in updated_results.columns
     assert tester.descriptions["custom_test"] == "This is a custom test"
     assert updated_results.filter(col("custom_test")).count() == 2
-    assert updated_results.filter(~col("custom_test")).count() == 2
+    assert updated_results.filter(~col("custom_test")).count() == 3
 
 
 def test_add_custom_test_result_return_extra_cols(sample_df, spark):
@@ -150,7 +156,7 @@ def test_add_custom_test_result_return_extra_cols(sample_df, spark):
     assert "custom_test" in updated_results.columns
     assert "name" in updated_results.columns
     assert updated_results.filter(col("custom_test")).count() == 2
-    assert updated_results.filter(updated_results["name"].isNotNull()).count() == 4
+    assert updated_results.filter(updated_results["name"].isNotNull()).count() == 5
 
 
 def test_add_custom_test_result_duplicate_primary_key(sample_df, spark):
@@ -208,7 +214,7 @@ def test_add_custom_test_result_invalid_description_type(sample_df, spark):
 
 def test_summary(sample_df, spark):
     tester = DataFrameTester(df=sample_df, primary_key="id", spark=spark)
-    tester.test(col="value", test=ValidNumericRange(min_value=21), nullable=True)
+    tester.test(col="value", test=ValidNumericRange(min_value=11), nullable=True)
     summary_df = tester.summary
 
     # Check the structure of the summary DataFrame
@@ -226,11 +232,11 @@ def test_summary(sample_df, spark):
 
     # Verify the summary for the boolean column
     test_bool_summary = summary_data["value__ValidNumericRange"]
-    assert test_bool_summary["n_tests"] == 4
-    assert test_bool_summary["n_passed"] == 2
-    assert test_bool_summary["n_failed"] == 2
-    assert test_bool_summary["percentage_passed"] == 50.0
-    assert test_bool_summary["percentage_failed"] == 50.0
+    assert test_bool_summary["n_tests"] == 5
+    assert test_bool_summary["n_passed"] == 4
+    assert test_bool_summary["n_failed"] == 1
+    assert test_bool_summary["percentage_passed"] == 80.0
+    assert test_bool_summary["percentage_failed"] == 20.0
 
 
 def test_summary_empty_df(spark):
@@ -252,7 +258,7 @@ def test_passed_tests(sample_df, spark):
     tester = DataFrameTester(df=sample_df, primary_key="id", spark=spark)
     tester.test(col="value", test=ValidNumericRange(min_value=11), nullable=True)
 
-    assert tester.passed_tests.count() == 3
+    assert tester.passed_tests.count() == 4
 
 
 def test_failed_tests(sample_df, spark):
@@ -287,4 +293,4 @@ def test_return_failed_rows_custom_test(sample_df, spark):
         return_failed_rows=True,
     )
 
-    assert updated_results.count() == 2
+    assert updated_results.count() == 3
