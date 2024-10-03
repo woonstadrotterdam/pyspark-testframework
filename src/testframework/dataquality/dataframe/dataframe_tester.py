@@ -299,62 +299,71 @@ class DataFrameTester:
 
     @property
     def summary(self) -> DataFrame:
-        """
-        Generate a summary DataFrame that provides insights into the test results stored in the `results` DataFrame.
-
-        The summary includes:
-        - The number of tests (`n_tests`) conducted for each column.
-        - For Boolean columns:
-            - The number of passed tests (`n_passed`).
-            - The percentage of passed tests (`percentage_passed`).
-            - The number of failed tests (`n_failed`).
-            - The percentage of failed tests (`percentage_failed`).
-        - Non-Boolean columns are excluded from the pass/fail calculations.
-
-        Returns:
-            DataFrame: A Spark DataFrame containing the summary statistics for each test column. The DataFrame has the following schema:
-                - `test`: The name of the test/column.
-                - `description`: A description of the test/column (if available).
-                - `n_tests`: The number of non-null entries for the test/column.
-                - `n_passed`: The number of entries that passed the test (only for Boolean columns).
-                - `percentage_passed`: The percentage of passed tests (only for Boolean columns).
-                - `n_failed`: The number of entries that failed the test (only for Boolean columns).
-                - `percentage_failed`: The percentage of failed tests (only for Boolean columns).
-
-        If there are no test results, returns an empty DataFrame with the appropriate schema.
-        """
-
         df = self.results
 
         test_columns = df.columns[1:]  # Exclude the first column
 
-        # Initialize an empty list to collect summary data
-        summary_data = []
+        # Lists to collect aggregation expressions and column info
+        agg_exprs = []
+        col_infos = []
 
         for col_name in test_columns:
             is_boolean = isinstance(df.schema[col_name].dataType, BooleanType)
+            description = self.descriptions.get(col_name, "")
 
-            # Always calculate n_tests
-            n_tests_expr = F.count(
-                F.when(F.col(col_name).isNotNull(), F.col(col_name))
-            ).alias(f"{col_name}_n_tests")
-            n_tests = df.agg(n_tests_expr).collect()[0][f"{col_name}_n_tests"]
+            # Collect column info
+            col_infos.append(
+                {
+                    "col_name": col_name,
+                    "is_boolean": is_boolean,
+                    "description": description,
+                }
+            )
 
-            # Conditionally calculate n_passed and n_failed only if the column is Boolean
+            # Expression to count non-null entries
+            n_tests_expr = F.count(F.col(col_name)).alias(f"{col_name}_n_tests")
+            agg_exprs.append(n_tests_expr)
+
             if is_boolean:
-                n_passed_expr = F.count(F.when(F.col(col_name), F.col(col_name))).alias(
+                # Expressions for n_passed and n_failed
+                n_passed_expr = F.sum(F.when(F.col(col_name), 1).otherwise(0)).alias(
                     f"{col_name}_n_passed"
                 )
-                n_failed_expr = F.count(
-                    F.when(~F.col(col_name), F.col(col_name))
-                ).alias(f"{col_name}_n_failed")
+                n_failed_expr = F.sum(F.when(~F.col(col_name), 1).otherwise(0)).alias(
+                    f"{col_name}_n_failed"
+                )
+                agg_exprs.extend([n_passed_expr, n_failed_expr])
 
-                # Perform aggregations in a single pass
-                agg_df = df.agg(n_passed_expr, n_failed_expr).collect()[0]
+        # If there are no expressions, return an empty DataFrame with the defined schema
+        if not agg_exprs:
+            schema = StructType(
+                [
+                    StructField("test", StringType(), True),
+                    StructField("description", StringType(), True),
+                    StructField("n_tests", LongType(), True),
+                    StructField("n_passed", LongType(), True),
+                    StructField("percentage_passed", DoubleType(), True),
+                    StructField("n_failed", LongType(), True),
+                    StructField("percentage_failed", DoubleType(), True),
+                ]
+            )
+            return self.spark.createDataFrame([], schema)
 
-                n_passed = agg_df[f"{col_name}_n_passed"]
-                n_failed = agg_df[f"{col_name}_n_failed"]
+        # Perform all aggregations in a single pass
+        agg_results = df.agg(*agg_exprs).collect()[0]
 
+        # Prepare the summary data
+        summary_data = []
+        for info in col_infos:
+            col_name = info["col_name"]
+            is_boolean = info["is_boolean"]
+            description = info["description"]
+
+            n_tests = agg_results[f"{col_name}_n_tests"]
+
+            if is_boolean:
+                n_passed = agg_results[f"{col_name}_n_passed"]
+                n_failed = agg_results[f"{col_name}_n_failed"]
                 percentage_passed = (
                     round(n_passed / n_tests * 100, 2) if n_tests > 0 else 0.0
                 )
@@ -362,7 +371,6 @@ class DataFrameTester:
                     round(n_failed / n_tests * 100, 2) if n_tests > 0 else 0.0
                 )
             else:
-                # If not Boolean, skip n_passed and n_failed calculations
                 n_passed = None
                 n_failed = None
                 percentage_passed = None
@@ -371,7 +379,7 @@ class DataFrameTester:
             summary_data.append(
                 (
                     col_name,
-                    self.descriptions.get(col_name, ""),
+                    description,
                     n_tests,
                     n_passed,
                     percentage_passed,
@@ -392,10 +400,6 @@ class DataFrameTester:
                 StructField("percentage_failed", DoubleType(), True),
             ]
         )
-
-        # If summary_data is empty, return an empty DataFrame with the defined schema
-        if not summary_data:
-            return self.spark.createDataFrame([], schema)
 
         # Create DataFrame from the summary data
         return self.spark.createDataFrame(summary_data, schema)
