@@ -345,7 +345,9 @@ class DataFrameTester:
             )
 
             # Expression to count non-null entries
-            n_tests_expr = F.count(F.col(col_name)).alias(f"{col_name}_n_tests")
+            n_tests_expr = F.count(F.col(col_name).isNotNull()).alias(
+                f"{col_name}_n_tests"
+            )
             agg_exprs.append(n_tests_expr)
 
             if is_boolean:
