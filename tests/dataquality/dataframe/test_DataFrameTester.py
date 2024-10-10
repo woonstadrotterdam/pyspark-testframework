@@ -239,6 +239,37 @@ def test_summary(sample_df, spark):
     assert test_bool_summary["percentage_failed"] == 20.0
 
 
+def test_summary_after_filter(sample_df, spark):
+    tester = DataFrameTester(df=sample_df, primary_key="id", spark=spark)
+    tester.test(
+        col="value",
+        test=ValidNumericRange(min_value=11),
+        nullable=True,
+        filter_rows=col("name") != "Cathy",
+    )
+    summary_df = tester.summary
+
+    assert set(summary_df.columns) == {
+        "test",
+        "description",
+        "n_tests",
+        "n_passed",
+        "percentage_passed",
+        "n_failed",
+        "percentage_failed",
+    }
+
+    summary_data = {row["test"]: row for row in summary_df.collect()}
+
+    # Verify the summary for the boolean column
+    test_bool_summary = summary_data["value__ValidNumericRange"]
+    assert test_bool_summary["n_tests"] == 4
+    assert test_bool_summary["n_passed"] == 3
+    assert test_bool_summary["n_failed"] == 1
+    assert test_bool_summary["percentage_passed"] == 75.0
+    assert test_bool_summary["percentage_failed"] == 25.0
+
+
 def test_summary_empty_df(spark):
     schema = StructType(
         [
