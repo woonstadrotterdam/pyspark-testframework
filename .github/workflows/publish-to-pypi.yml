@@ -94,12 +94,12 @@ jobs:
         with:
           name: python-package-distributions
           path: dist/
-      - name: Sign the dists with Sigstore
-        uses: sigstore/gh-action-sigstore-python@v2.1.1
-        with:
-          inputs: >-
-            ./dist/*.tar.gz
-            ./dist/*.whl
+      # - name: Sign the dists with Sigstore
+      #   uses: sigstore/gh-action-sigstore-python@v2.1.1
+      #   with:
+      #     inputs: >-
+      #       ./dist/*.tar.gz
+      #       ./dist/*.whl
       - name: Determine latest Release
         env:
           GITHUB_TOKEN: ${{ github.token }}
