@@ -7,6 +7,7 @@ from .valid_date_range import ValidDateRange
 from .valid_numeric_range import ValidNumericRange
 from .valid_numeric_string_range import ValidNumericStringRange
 from .valid_string_length import ValidStringLength
+
 __all__ = [
     "CorrectValue",
     "IntegerString",
@@ -16,5 +17,5 @@ __all__ = [
     "ValidDateRange",
     "ValidNumericRange",
     "ValidNumericStringRange",
-    "ValidStringLength"
+    "ValidStringLength",
 ]

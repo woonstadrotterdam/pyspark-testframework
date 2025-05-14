@@ -66,6 +66,3 @@ def test_ValidStringLength(
 def test_ValidStringLength_error():
     with pytest.raises(ValueError):
         ValidStringLength()  # both min_value and max_value not defined
-
-
-
