@@ -10,7 +10,7 @@ class ValidEmailAddress(Test):
     def __init__(self, *, name: str = "ValidEmailAddress") -> None:
         super().__init__(name=name)
         # Basic regex for email validation, can be adjusted for more complex needs
-        self.email_regex = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+        self.email_regex = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}$"
 
     @account_for_nullable
     @allowed_col_types([StringType])
@@ -21,4 +21,4 @@ class ValidEmailAddress(Test):
         return f"{self.name}()"
 
     def __repr__(self) -> str:
-        return f"{self.name}()" 
+        return f"{self.name}()"
