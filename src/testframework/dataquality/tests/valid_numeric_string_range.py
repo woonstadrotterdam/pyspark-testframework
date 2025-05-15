@@ -19,7 +19,9 @@ class ValidNumericStringRange(Test):
     ) -> None:
         super().__init__(name=name)
         if min_value is None and max_value is None:
-            raise ValueError("At least one of 'min' or 'max' must be provided")
+            raise ValueError(
+                "At least one of 'min_value' or 'max_value' must be provided"
+            )
         self.min_value = float("-inf") if min_value is None else float(min_value)
         self.max_value = float("inf") if max_value is None else float(max_value)
         self.floats_allowed = floats_allowed
