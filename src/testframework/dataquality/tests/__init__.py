@@ -7,6 +7,7 @@ from .valid_date_range import ValidDateRange
 from .valid_numeric_range import ValidNumericRange
 from .valid_numeric_string_range import ValidNumericStringRange
 from .valid_string_length import ValidStringLength
+from .valid_email_address import ValidEmailAddress
 
 __all__ = [
     "CorrectValue",
@@ -18,4 +19,5 @@ __all__ = [
     "ValidNumericRange",
     "ValidNumericStringRange",
     "ValidStringLength",
+    "ValidEmailAddress",
 ]
