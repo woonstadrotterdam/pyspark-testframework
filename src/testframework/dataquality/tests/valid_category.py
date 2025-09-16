@@ -9,15 +9,31 @@ from testframework.utils.decorators import account_for_nullable, allowed_col_typ
 class ValidCategory(Test):
     """
     Returns True if the value is one of the specified categorical values.
+
+    Args:
+        categories (set[str]): Set of valid categorical values to check against
+        case_sensitive (bool): Whether to perform case-sensitive comparison (default: True)
+        name (str): Name of the test (default: "ValidCategory")
+
+    Raises:
+        TypeError: If categories is not a set of strings
+        ValueError: If nullable is False and None is in categories
     """
 
-    def __init__(self, *, categories: set[str], name: str = "ValidCategory"):
+    def __init__(
+        self,
+        *,
+        categories: set[str],
+        case_sensitive: bool = True,
+        name: str = "ValidCategory",
+    ):
         super().__init__(name=name)
         if isinstance(categories, list):
             categories = set(categories)
         if not isinstance(categories, set):
             raise TypeError(f"Categories must be a set of strings. {categories = }")
         self.categories = categories
+        self.case_sensitive = case_sensitive
 
     @account_for_nullable
     @allowed_col_types([StringType])
@@ -26,10 +42,18 @@ class ValidCategory(Test):
             raise ValueError(
                 "Nullable is False doesn't make sense if correct_values contains None, please use nullable=True"
             )
-        return F.col(column).isin(self.categories)
+
+        if self.case_sensitive:
+            return F.col(column).isin(self.categories)
+        else:
+            # Convert both column values and categories to lowercase for comparison
+            lowercase_categories = {
+                cat.lower() if cat is not None else None for cat in self.categories
+            }
+            return F.lower(F.col(column)).isin(lowercase_categories)
 
     def __str__(self) -> str:
-        return f"{self.name}(categories={self.categories})"
+        return f"{self.name}(categories={self.categories}, case_sensitive={self.case_sensitive})"
 
     def __repr__(self) -> str:
-        return f"{self.name}(categories={self.categories})"
+        return f"{self.name}(categories={self.categories}, case_sensitive={self.case_sensitive})"
