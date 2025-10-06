@@ -28,6 +28,7 @@ class DataFrameTester:
         df (DataFrame): The pyspark DataFrame to test.
         primary_key (Union[str, list[str]]): The name of the column(s) used as a primary key. The column should contain only unique values. Rows of which all primary keys are null are deleted.
         spark (SparkSession): The SparkSession to use for the tests.
+        context_cols (Optional[list[str]]): Additional columns to include in the results DataFrame alongside the primary key. Columns that overlap with primary_key are automatically filtered out. Defaults to None.
     """
 
     def __init__(
@@ -35,12 +36,13 @@ class DataFrameTester:
         df: DataFrame,
         primary_key: Union[str, list[str]],
         spark: SparkSession,
+        context_cols: Optional[list[str]] = None,
     ) -> None:
         self.primary_key = (
             [primary_key] if isinstance(primary_key, str) else primary_key
         )
         self.df = self._check_primary_key(df)
-        self.results: DataFrame = self.df.select(self.primary_key)
+        self.results: DataFrame = self._initialize_results_dataframe(context_cols)
         self.spark = spark
         self.descriptions: dict[str, str] = {}
 
@@ -56,6 +58,41 @@ class DataFrameTester:
             DataFrame: The loaded Spark DataFrame.
         """
         return df.select(cls.potential_primary_keys(df))
+
+    def _initialize_results_dataframe(
+        self, context_cols: Optional[list[str]]
+    ) -> DataFrame:
+        """
+        Initialize the results DataFrame with primary key and optional extra columns.
+
+        Args:
+            context_cols (Optional[list[str]]): Additional columns to include alongside primary key.
+
+        Returns:
+            DataFrame: The initialized results DataFrame.
+
+        Raises:
+            ValueError: If any columns in context_cols are not found in the DataFrame.
+        """
+        if context_cols:
+            # Check all columns at once for better performance
+            missing_cols = [col for col in context_cols if col not in self.df.columns]
+            if missing_cols:
+                available_cols = sorted(self.df.columns)
+                raise ValueError(
+                    f"Column(s) {missing_cols} not found in DataFrame. "
+                    f"Available columns: {available_cols}"
+                )
+
+            # Remove duplicates and preserve order while avoiding primary key duplication
+            context_cols_filtered = [
+                col for col in context_cols if col not in self.primary_key
+            ]
+            self.non_test_cols = self.primary_key + context_cols_filtered
+
+        else:
+            self.non_test_cols = self.primary_key
+        return self.df.select(self.non_test_cols)
 
     def _check_primary_key(self, df: DataFrame) -> DataFrame:
         """
@@ -179,17 +216,17 @@ class DataFrameTester:
             self.df.filter(filter_rows) if filter_rows is not None else self.df
         )
 
-        test_result = test.test(filtered_df, col, self.primary_key, nullable)
+        test_result = test.test(filtered_df, col, self.non_test_cols, nullable)
+        test_name = test.generate_result_col_name(col)
+        test_result = test_result.select(self.non_test_cols + [test_name])
 
         if not dummy_run:
-            test_name = test.generate_result_col_name(col)
-
             self.descriptions[test_name] = (
                 description if description else f"{col}__{test}"
             )
 
-            new_test_results = self.results.drop(test_name)
-            new_test_results = new_test_results.join(
+            old_test_results = self.results.drop(test_name)
+            new_test_results = old_test_results.join(
                 test_result.select(self.primary_key + [test_name]),
                 on=self.primary_key,
                 how="left",
@@ -273,8 +310,8 @@ class DataFrameTester:
 
         self.descriptions[name] = description if description else name
 
-        new_test_results = self.results.drop(name)
-        new_test_results = new_test_results.join(
+        old_test_results = self.results.drop(name)
+        new_test_results = old_test_results.join(
             result.select(self.primary_key + [name]),
             on=self.primary_key,
             how="left",
@@ -289,13 +326,13 @@ class DataFrameTester:
             new_test_results = new_test_results.filter(F.col(name) == F.lit(False))
 
         if return_extra_cols:
-            return new_test_results.select(*self.primary_key, name).join(
+            return new_test_results.join(
                 self.df.select(*self.primary_key, *return_extra_cols),
                 on=self.primary_key,
                 how="left",
             )
 
-        return new_test_results.select(*self.primary_key, name)
+        return new_test_results.select(self.non_test_cols + [name])
 
     @property
     def summary(self) -> DataFrame:
@@ -325,7 +362,7 @@ class DataFrameTester:
         """
         df = self.results
 
-        test_columns = df.columns[1:]  # Exclude the first column
+        test_columns = df.columns[len(self.non_test_cols) :]  # Exclude non-test columns
 
         # Lists to collect aggregation expressions and column info
         agg_exprs = []
@@ -439,8 +476,8 @@ class DataFrameTester:
             DataFrame: A DataFrame containing only the rows where no test has failed.
         """
         conditions = [
-            (F.col(col) != F.lit(False) | F.col(col).isNull())
-            for col in self.results.columns[1:]
+            ((F.col(col) != F.lit(False)) | F.col(col).isNull())
+            for col in self.results.columns[len(self.non_test_cols) :]
             if isinstance(self.results.schema[col].dataType, BooleanType)
         ]
 
@@ -462,7 +499,7 @@ class DataFrameTester:
         """
         conditions = [
             F.col(col) == F.lit(False)
-            for col in self.results.columns[1:]
+            for col in self.results.columns[len(self.non_test_cols) :]
             if isinstance(self.results.schema[col].dataType, BooleanType)
         ]
 
