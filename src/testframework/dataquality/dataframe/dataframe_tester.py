@@ -427,12 +427,8 @@ class DataFrameTester:
             if is_boolean:
                 n_passed = agg_results[f"{col_name}_n_passed"]
                 n_failed = agg_results[f"{col_name}_n_failed"]
-                percentage_passed = (
-                    round(n_passed / n_tests * 100, 2) if n_tests > 0 else 0.0
-                )
-                percentage_failed = (
-                    round(n_failed / n_tests * 100, 2) if n_tests > 0 else 0.0
-                )
+                percentage_passed = n_passed / n_tests * 100 if n_tests > 0 else 0.0
+                percentage_failed = n_failed / n_tests * 100 if n_tests > 0 else 0.0
             else:
                 n_passed = None
                 n_failed = None
