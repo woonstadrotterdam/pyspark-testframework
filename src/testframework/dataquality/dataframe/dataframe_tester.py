@@ -1,6 +1,5 @@
 import logging
-from functools import reduce
-from typing import Any, Optional, Union
+from typing import Any, Optional
 
 from pyspark.sql import Column, DataFrame, SparkSession
 from pyspark.sql import functions as F
@@ -11,6 +10,7 @@ from pyspark.sql.types import (
     StringType,
     StructField,
     StructType,
+    TimestampType,
 )
 
 from testframework.dataquality._base import Test
@@ -26,7 +26,7 @@ class DataFrameTester:
 
     Args:
         df (DataFrame): The pyspark DataFrame to test.
-        primary_key (Union[str, list[str]]): The name of the column(s) used as a primary key. The column should contain only unique values. Rows of which all primary keys are null are deleted.
+        primary_key (str): The name of the column used as a primary key. The column should contain only unique values. Rows where the primary key is null are deleted.
         spark (SparkSession): The SparkSession to use for the tests.
         context_cols (Optional[list[str]]): Additional columns to include in the results DataFrame alongside the primary key. Columns that overlap with primary_key are automatically filtered out. Defaults to None.
     """
@@ -34,17 +34,15 @@ class DataFrameTester:
     def __init__(
         self,
         df: DataFrame,
-        primary_key: Union[str, list[str]],
+        primary_key: str,
         spark: SparkSession,
         context_cols: Optional[list[str]] = None,
     ) -> None:
-        self.primary_key = (
-            [primary_key] if isinstance(primary_key, str) else primary_key
-        )
+        self.primary_key = primary_key
+        self.spark = spark
         self.df = self._check_primary_key(df)
         self.results: DataFrame = self._initialize_results_dataframe(context_cols)
-        self.spark = spark
-        self.descriptions: dict[str, str] = {}
+        self.datetime = F.current_timestamp()
 
     @classmethod
     def unique_columns(cls, df: DataFrame) -> DataFrame:
@@ -63,13 +61,13 @@ class DataFrameTester:
         self, context_cols: Optional[list[str]]
     ) -> DataFrame:
         """
-        Initialize the results DataFrame with primary key and optional extra columns.
+        Initialize the results DataFrame with long-format structure.
 
         Args:
             context_cols (Optional[list[str]]): Additional columns to include alongside primary key.
 
         Returns:
-            DataFrame: The initialized results DataFrame.
+            DataFrame: The initialized empty results DataFrame in long-format.
 
         Raises:
             ValueError: If any columns in context_cols are not found in the DataFrame.
@@ -86,13 +84,37 @@ class DataFrameTester:
 
             # Remove duplicates and preserve order while avoiding primary key duplication
             context_cols_filtered = [
-                col for col in context_cols if col not in self.primary_key
+                col for col in context_cols if col != self.primary_key
             ]
-            self.non_test_cols = self.primary_key + context_cols_filtered
+            self.non_test_cols = [self.primary_key] + context_cols_filtered
 
         else:
-            self.non_test_cols = self.primary_key
-        return self.df.select(self.non_test_cols)
+            self.non_test_cols = [self.primary_key]
+
+        # Create empty long-format DataFrame schema
+        schema = StructType(
+            [
+                StructField(
+                    "primary_key", StringType(), True
+                ),  # Concatenated primary key
+                StructField(
+                    "primary_key_col", StringType(), True
+                ),  # Primary key column name
+                StructField("test_name", StringType(), True),  # Test name
+                StructField("test_col", StringType(), True),  # Column tested
+                StructField("test_value", StringType(), True),  # Actual value tested
+                StructField("test_result", BooleanType(), True),  # Test result
+                StructField("test_description", StringType(), True),  # Test description
+                StructField("timestamp", TimestampType(), True),  # UTC timestamp
+            ]
+        )
+
+        # Add context columns if any
+        for col in self.non_test_cols:
+            if col != self.primary_key:
+                schema.add(StructField(col, StringType(), True))
+
+        return self.spark.createDataFrame([], schema)
 
     def _check_primary_key(self, df: DataFrame) -> DataFrame:
         """
@@ -108,15 +130,14 @@ class DataFrameTester:
             KeyError: If the primary key column is not an existing column in the DataFrame.
             ValueError: If the primary key column does not contain unique values.
         """
-        for key in self.primary_key:
-            if key not in df.columns:
-                unique_primary_keys = self.potential_primary_keys(df)
-                raise KeyError(
-                    f"Primary key column '{key}' is not an existing column in this DataFrame.",
-                    f"Unique primary keys in this DataFrame: {unique_primary_keys}. You can also use multiple columns as composite primary key",
-                )
+        if self.primary_key not in df.columns:
+            unique_primary_keys = self.potential_primary_keys(df)
+            raise KeyError(
+                f"Primary key column '{self.primary_key}' is not an existing column in this DataFrame.",
+                f"Unique primary keys in this DataFrame: {unique_primary_keys}",
+            )
 
-        df_filtered = df.dropna(how="all", subset=self.primary_key)
+        df_filtered = df.dropna(subset=[self.primary_key])
         null_count = df.count() - df_filtered.count()
         if null_count > 0:
             logger.warning(
@@ -127,15 +148,13 @@ class DataFrameTester:
         return df_filtered
 
     @classmethod
-    def assert_primary_key_unique(
-        cls, df: DataFrame, primary_key: Union[str, list[str]]
-    ) -> None:
+    def assert_primary_key_unique(cls, df: DataFrame, primary_key: str) -> None:
         """
         Checks if the specified primary key column contains unique values.
 
         Args:
             df (DataFrame): The DataFrame to check.
-            primary_key (Union[str, list[str]]): The primary key column name.
+            primary_key (str): The primary key column name.
 
         Raises:
             ValueError: If the primary key column does not contain unique values.
@@ -144,14 +163,14 @@ class DataFrameTester:
         distinct_count = df.select(primary_key).distinct().count()
         if total_count != distinct_count:
             logger.error(
-                f"Primary key(s) {primary_key} is not unique ({total_count = }, {distinct_count = }). Determining potential primary keys.."
+                f"Primary key '{primary_key}' is not unique ({total_count = }, {distinct_count = }). Determining potential primary keys.."
             )
             unique_primary_keys = cls.potential_primary_keys(
                 df, total_count=total_count
             )
             raise ValueError(
                 f"Primary key '{primary_key}' is not unique",
-                f"Unique primary keys in this DataFrame: {unique_primary_keys}. You can also use multiple columns as composite primary key",
+                f"Unique primary keys in this DataFrame: {unique_primary_keys}",
             )
 
     @staticmethod
@@ -186,12 +205,12 @@ class DataFrameTester:
             nullable (bool): Indicates if the column to test is allowed to contain null-values.
             description (Optional[str]): Description of the test for reporting purposes.
             filter_rows (Optional[Column]): Uses df.filter(filter_rows) to filter rows for which the test doesn't apply.
-            return_extra_cols (Optional[list[str]]): Return extra columns from the original dataframe. Defaults to None.
+            return_extra_cols (Optional[list[str]]): Return extra columns from the original dataframe (not saved to results). Defaults to None.
             dummy_run (bool): If True, perform a dummy run without saving results. Defaults to False.
             return_failed_rows (bool): If True, return only the rows where the test has failed. Defaults to False.
 
         Returns:
-            DataFrame: The test results as a DataFrame.
+            DataFrame: The test results as a DataFrame in long-format.
 
         Raises:
             TypeError: If the test is not an instance of Test or its subclass.
@@ -216,46 +235,123 @@ class DataFrameTester:
             self.df.filter(filter_rows) if filter_rows is not None else self.df
         )
 
-        test_result = test.test(filtered_df, col, self.non_test_cols, nullable)
-        test_name = test.generate_result_col_name(col)
-        test_result = test_result.select(self.non_test_cols + [test_name])
+        # Tests now return long-format DataFrames directly
+        long_format_result = test.test(filtered_df, col, self.primary_key, nullable)
+
+        # Add the timestamp and primary_key_col columns
+        long_format_result = long_format_result.select(
+            long_format_result.primary_key,
+            F.lit(self.primary_key).alias("primary_key_col"),
+            long_format_result.test_name,
+            long_format_result.test_col,
+            long_format_result.test_value,
+            long_format_result.test_result,
+            long_format_result.test_description,
+            self.datetime.alias("timestamp"),
+        )
+
+        # Override description if provided
+        if description:
+            long_format_result = long_format_result.withColumn(
+                "test_description", F.lit(description)
+            )
+
+        # Add context columns if they exist
+        if hasattr(self, "non_test_cols") and len(self.non_test_cols) > 1:
+            # Join with original data to get context columns, excluding the column being tested
+            context_cols_to_include = [
+                col_name
+                for col_name in self.non_test_cols
+                if col_name != self.primary_key and col_name != col
+            ]
+            if context_cols_to_include:
+                context_cols_df = filtered_df.select(
+                    self.primary_key, *context_cols_to_include
+                )
+                long_format_result = long_format_result.join(
+                    context_cols_df,
+                    long_format_result.primary_key == context_cols_df[self.primary_key],
+                    how="left",
+                ).select(
+                    long_format_result.primary_key,
+                    long_format_result.primary_key_col,
+                    long_format_result.test_name,
+                    long_format_result.test_col,
+                    long_format_result.test_value,
+                    long_format_result.test_result,
+                    long_format_result.test_description,
+                    long_format_result.timestamp,
+                    *[F.col(col).alias(col) for col in context_cols_to_include],
+                )
 
         if not dummy_run:
-            self.descriptions[test_name] = (
-                description if description else f"{col}__{test}"
+            # Union with existing results, handling schema differences
+            self.results = self._union_with_schema_alignment(
+                self.results, long_format_result
             )
-
-            old_test_results = self.results.drop(test_name)
-            new_test_results = old_test_results.join(
-                test_result.select(self.primary_key + [test_name]),
-                on=self.primary_key,
-                how="left",
-            )
-            self.results = new_test_results
 
         if return_failed_rows:
-            test_result = test_result.filter(F.col(test_name) == F.lit(False))
-
-        if return_extra_cols:
-            return test_result.join(
-                self.df.select(*self.primary_key, *return_extra_cols),
-                on=self.primary_key,
-                how="left",
+            long_format_result = long_format_result.filter(
+                F.col("test_result") == F.lit(False)
             )
 
-        return test_result
+        if return_extra_cols:
+            # Join with original data for extra columns (not saved to results)
+            # Filter out columns that are already context columns to avoid duplication
+            context_col_names = set(self.non_test_cols) - {self.primary_key}
+            extra_cols_filtered = [
+                col for col in return_extra_cols if col not in context_col_names
+            ]
 
-    @property
-    def description_df(self) -> DataFrame:
+            if extra_cols_filtered:
+                extra_cols_df = self.df.select(self.primary_key, *extra_cols_filtered)
+                long_format_result = long_format_result.join(
+                    extra_cols_df,
+                    long_format_result.primary_key == extra_cols_df[self.primary_key],
+                    how="left",
+                ).select(
+                    long_format_result["*"],
+                    *[F.col(col) for col in extra_cols_filtered],
+                )
+
+        return long_format_result.drop(
+            "primary_key_col", "timestamp", "test_description"
+        )
+
+    def _union_with_schema_alignment(self, df1: DataFrame, df2: DataFrame) -> DataFrame:
         """
-        Creates a DataFrame from the descriptions dictionary.
+        Union two DataFrames with schema alignment to handle different context columns.
+
+        Args:
+            df1 (DataFrame): First DataFrame (existing results)
+            df2 (DataFrame): Second DataFrame (new test results)
 
         Returns:
-            DataFrame: A DataFrame containing the test names and their descriptions.
+            DataFrame: Unioned DataFrame with aligned schema
         """
-        return self.spark.createDataFrame(
-            [(k, v) for k, v in self.descriptions.items()], ["test", "description"]
-        )
+        # Get all unique column names from both DataFrames
+        all_columns = set(df1.columns) | set(df2.columns)
+
+        # Create select expressions for both DataFrames, filling missing columns with null
+        select_exprs_df1 = []
+        select_exprs_df2 = []
+
+        for col in sorted(all_columns):
+            if col in df1.columns:
+                select_exprs_df1.append(F.col(col))
+            else:
+                select_exprs_df1.append(F.lit(None).alias(col))
+
+            if col in df2.columns:
+                select_exprs_df2.append(F.col(col))
+            else:
+                select_exprs_df2.append(F.lit(None).alias(col))
+
+        # Apply the select expressions and union
+        df1_aligned = df1.select(*select_exprs_df1)
+        df2_aligned = df2.select(*select_exprs_df2)
+
+        return df1_aligned.union(df2_aligned)
 
     def add_custom_test_result(
         self,
@@ -265,6 +361,7 @@ class DataFrameTester:
         fillna_value: Optional[Any] = None,
         return_extra_cols: Optional[list[str]] = None,
         return_failed_rows: bool = False,
+        value_column: Optional[str] = None,
     ) -> DataFrame:
         """
         Adds custom test results to the test DataFrame.
@@ -274,16 +371,18 @@ class DataFrameTester:
             name (str): The name of the custom test, which should be a column in test_result.
             description (Optional[str]): Description of the test for reporting purposes.
             fillna_value (Optional[Any]): The value to fill nulls in the test result column after left joining on the primary_key. Defaults to None.
-            return_extra_cols (Optional[list[str]]): Return extra columns from the original dataframe. Defaults to None.
+            return_extra_cols (Optional[list[str]]): Return extra columns from the original dataframe (not saved to results). Defaults to None.
             return_failed_rows (bool): If True, return only the rows where the test has failed. Defaults to False.
+            value_column (Optional[str]): The name of the column containing the actual values being tested. If provided, these values will be used in the test_value field instead of "N/A". Defaults to None.
 
         Returns:
-            DataFrame: The updated test DataFrame with the custom test results.
+            DataFrame: The updated test DataFrame with the custom test results in long-format.
 
         Raises:
             TypeError: If result is not a pyspark DataFrame.
             ValueError: If the primary key is not found in the result DataFrame or is not unique.
             TypeError: If description is not of type string or None.
+            ValueError: If value_column is specified but not found in the result DataFrame.
         """
 
         if not isinstance(result, DataFrame):
@@ -291,9 +390,8 @@ class DataFrameTester:
                 f"test_result should be a pyspark DataFrame, but it's a {type(result)}"
             )
 
-        for key in self.primary_key:
-            if key not in result.columns:
-                raise ValueError(f"primary_key '{key}' not found in DataFrame")
+        if self.primary_key not in result.columns:
+            raise ValueError(f"primary_key '{self.primary_key}' not found in DataFrame")
 
         if name not in result.columns:
             raise ValueError(
@@ -308,31 +406,121 @@ class DataFrameTester:
         if not isinstance(description, (str, type(None))):
             raise TypeError("test_description must be of type string")
 
-        self.descriptions[name] = description if description else name
-
-        old_test_results = self.results.drop(name)
-        new_test_results = old_test_results.join(
-            result.select(self.primary_key + [name]),
-            on=self.primary_key,
-            how="left",
-        )
-
-        if fillna_value is not None:
-            new_test_results = new_test_results.fillna({name: fillna_value})
-
-        self.results = new_test_results
-
-        if return_failed_rows:
-            new_test_results = new_test_results.filter(F.col(name) == F.lit(False))
-
-        if return_extra_cols:
-            return new_test_results.join(
-                self.df.select(*self.primary_key, *return_extra_cols),
-                on=self.primary_key,
-                how="left",
+        if value_column is not None and value_column not in result.columns:
+            raise ValueError(
+                f"value_column '{value_column}' not found in result DataFrame"
             )
 
-        return new_test_results.select(self.non_test_cols + [name])
+        # Convert custom test result to long-format
+        long_format_result = self._convert_custom_to_long_format(
+            result, name, description, value_column
+        )
+
+        # Add context columns by joining with original DataFrame
+        if hasattr(self, "non_test_cols") and len(self.non_test_cols) > 1:
+            # For custom tests, we don't know which column is being tested, so include all context columns
+            context_cols_df = self.df.select(
+                self.primary_key,
+                *[col for col in self.non_test_cols if col != self.primary_key],
+            )
+            long_format_result = long_format_result.join(
+                context_cols_df,
+                long_format_result.primary_key == context_cols_df[self.primary_key],
+                how="left",
+            ).select(
+                long_format_result.primary_key,
+                long_format_result.primary_key_col,
+                long_format_result.test_name,
+                long_format_result.test_col,
+                long_format_result.test_value,
+                long_format_result.test_result,
+                long_format_result.test_description,
+                long_format_result.timestamp,
+                *[
+                    F.col(col).alias(col)
+                    for col in self.non_test_cols
+                    if col != self.primary_key
+                ],
+            )
+
+        # Apply fillna if specified
+        if fillna_value is not None:
+            long_format_result = long_format_result.fillna(
+                {"test_result": fillna_value}
+            )
+
+        # Union with existing results, handling schema differences
+        self.results = self._union_with_schema_alignment(
+            self.results, long_format_result
+        )
+
+        if return_failed_rows:
+            long_format_result = long_format_result.filter(
+                F.col("test_result") == F.lit(False)
+            )
+
+        if return_extra_cols:
+            # Join with original data for extra columns (not saved to results)
+            # Filter out columns that are already context columns to avoid duplication
+            context_col_names = set(self.non_test_cols) - {self.primary_key}
+            extra_cols_filtered = [
+                col for col in return_extra_cols if col not in context_col_names
+            ]
+
+            if extra_cols_filtered:
+                extra_cols_df = self.df.select(self.primary_key, *extra_cols_filtered)
+                long_format_result = long_format_result.join(
+                    extra_cols_df,
+                    long_format_result.primary_key == extra_cols_df[self.primary_key],
+                    how="left",
+                ).select(
+                    long_format_result["*"],
+                    *[F.col(col) for col in extra_cols_filtered],
+                )
+
+        return long_format_result
+
+    def _convert_custom_to_long_format(
+        self,
+        result: DataFrame,
+        name: str,
+        description: Optional[str],
+        value_column: Optional[str] = None,
+    ) -> DataFrame:
+        """
+        Convert custom test result to long-format.
+
+        Args:
+            result (DataFrame): DataFrame with custom test results
+            name (str): Name of the custom test
+            description (Optional[str]): Description of the test
+            value_column (Optional[str]): Optional column name containing the actual values being tested
+
+        Returns:
+            DataFrame: Long-format DataFrame with test results
+        """
+        # Create primary key string (no concatenation needed for single primary key)
+        pk_expr = F.col(self.primary_key).cast(StringType())
+
+        # Determine test_value expression based on whether value_column is provided
+        if value_column is not None:
+            test_value_expr = F.col(value_column).cast(StringType())
+        else:
+            test_value_expr = F.lit("N/A")
+
+        # Select columns for long-format
+        select_exprs = [
+            pk_expr.alias("primary_key"),
+            F.lit(self.primary_key).alias("primary_key_col"),
+            F.lit(name).alias("test_name"),
+            F.lit("custom_test_result").alias("test_col"),
+            test_value_expr.alias("test_value"),
+            F.col(name).alias("test_result"),
+            F.lit(description if description else name).alias("test_description"),
+            self.datetime.alias("timestamp"),
+        ]
+
+        return result.select(*select_exprs)
 
     @property
     def summary(self) -> DataFrame:
@@ -340,169 +528,106 @@ class DataFrameTester:
         Generate a summary DataFrame that provides insights into the test results stored in the `results` DataFrame.
 
         The summary includes:
-        - The number of tests (`n_tests`) conducted for each column.
+        - The number of tests (`n_tests`) conducted for each test.
         - For Boolean columns:
             - The number of passed tests (`n_passed`).
             - The percentage of passed tests (`percentage_passed`).
             - The number of failed tests (`n_failed`).
             - The percentage of failed tests (`percentage_failed`).
-        - Non-Boolean columns are excluded from the pass/fail calculations.
 
         Returns:
-            DataFrame: A Spark DataFrame containing the summary statistics for each test column. The DataFrame has the following schema:
-                - `test`: The name of the test/column.
-                - `description`: A description of the test/column (if available).
-                - `n_tests`: The number of non-null entries for the test/column.
-                - `n_passed`: The number of entries that passed the test (only for Boolean columns).
-                - `percentage_passed`: The percentage of passed tests (only for Boolean columns).
-                - `n_failed`: The number of entries that failed the test (only for Boolean columns).
-                - `percentage_failed`: The percentage of failed tests (only for Boolean columns).
+            DataFrame: A Spark DataFrame containing the summary statistics for each test. The DataFrame has the following schema:
+                - `test_name`: The name of the test.
+                - `test_col`: The column that was tested.
+                - `test_description`: A description of the test (if available).
+                - `primary_key_col`: The name of the primary key column.
+                - `n_tests`: The number of non-null entries for the test.
+                - `n_passed`: The number of entries that passed the test.
+                - `percentage_passed`: The percentage of passed tests.
+                - `n_failed`: The number of entries that failed the test.
+                - `percentage_failed`: The percentage of failed tests.
+                - `timestamp`: The timestamp when the test was executed.
 
         If there are no test results, returns an empty DataFrame with the appropriate schema.
         """
-        df = self.results
-
-        test_columns = df.columns[len(self.non_test_cols) :]  # Exclude non-test columns
-
-        # Lists to collect aggregation expressions and column info
-        agg_exprs = []
-        col_infos = []
-
-        for col_name in test_columns:
-            is_boolean = isinstance(df.schema[col_name].dataType, BooleanType)
-            description = self.descriptions.get(col_name, "")
-
-            # Collect column info
-            col_infos.append(
-                {
-                    "col_name": col_name,
-                    "is_boolean": is_boolean,
-                    "description": description,
-                }
-            )
-
-            # Expression to count non-null entries
-            n_tests_expr = F.sum(
-                F.when(F.col(col_name).isNotNull(), 1).otherwise(0)
-            ).alias(f"{col_name}_n_tests")
-            agg_exprs.append(n_tests_expr)
-
-            if is_boolean:
-                # Expressions for n_passed and n_failed
-                n_passed_expr = F.sum(F.when(F.col(col_name), 1).otherwise(0)).alias(
-                    f"{col_name}_n_passed"
-                )
-                n_failed_expr = F.sum(F.when(~F.col(col_name), 1).otherwise(0)).alias(
-                    f"{col_name}_n_failed"
-                )
-                agg_exprs.extend([n_passed_expr, n_failed_expr])
-
-        # If there are no expressions, return an empty DataFrame with the defined schema
-        if not agg_exprs:
+        if self.results.count() == 0:
             schema = StructType(
                 [
-                    StructField("test", StringType(), True),
-                    StructField("description", StringType(), True),
+                    StructField("test_name", StringType(), True),
+                    StructField("test_col", StringType(), True),
+                    StructField("test_description", StringType(), True),
+                    StructField("primary_key_col", StringType(), True),
                     StructField("n_tests", LongType(), True),
                     StructField("n_passed", LongType(), True),
                     StructField("percentage_passed", DoubleType(), True),
                     StructField("n_failed", LongType(), True),
                     StructField("percentage_failed", DoubleType(), True),
+                    StructField("timestamp", TimestampType(), True),
                 ]
             )
             return self.spark.createDataFrame([], schema)
 
-        # Perform all aggregations in a single pass
-        agg_results = df.agg(*agg_exprs).collect()[0]
-
-        # Prepare the summary data
-        summary_data = []
-        for info in col_infos:
-            col_name = info["col_name"]
-            is_boolean = info["is_boolean"]
-            description = info["description"]
-
-            n_tests = agg_results[f"{col_name}_n_tests"]
-
-            if is_boolean:
-                n_passed = agg_results[f"{col_name}_n_passed"]
-                n_failed = agg_results[f"{col_name}_n_failed"]
-                percentage_passed = n_passed / n_tests * 100 if n_tests > 0 else 0.0
-                percentage_failed = n_failed / n_tests * 100 if n_tests > 0 else 0.0
-            else:
-                n_passed = None
-                n_failed = None
-                percentage_passed = None
-                percentage_failed = None
-
-            summary_data.append(
-                (
-                    col_name,
-                    description,
-                    n_tests,
-                    n_passed,
-                    percentage_passed,
-                    n_failed,
-                    percentage_failed,
-                )
+        # Group by test_name and test_col to get per-column test summaries
+        summary_df = (
+            self.results.groupBy("test_name", "test_col")
+            .agg(
+                F.sum(F.when(F.col("test_result").isNotNull(), 1).otherwise(0)).alias(
+                    "n_tests"
+                ),
+                F.sum(F.when(F.col("test_result"), 1).otherwise(0)).alias("n_passed"),
+                F.sum(F.when(~F.col("test_result"), 1).otherwise(0)).alias("n_failed"),
+                F.first("test_description").alias("test_description"),
+                F.first("primary_key_col").alias("primary_key_col"),
+                F.first("timestamp").alias("timestamp"),
             )
-
-        # Define the schema explicitly
-        schema = StructType(
-            [
-                StructField("test", StringType(), True),
-                StructField("description", StringType(), True),
-                StructField("n_tests", LongType(), True),
-                StructField("n_passed", LongType(), True),
-                StructField("percentage_passed", DoubleType(), True),
-                StructField("n_failed", LongType(), True),
-                StructField("percentage_failed", DoubleType(), True),
-            ]
+            .withColumn(
+                "percentage_passed",
+                F.when(
+                    F.col("n_tests") > 0, F.col("n_passed") / F.col("n_tests") * 100
+                ).otherwise(0.0),
+            )
+            .withColumn(
+                "percentage_failed",
+                F.when(
+                    F.col("n_tests") > 0, F.col("n_failed") / F.col("n_tests") * 100
+                ).otherwise(0.0),
+            )
+            .select(
+                "test_name",
+                "test_description",
+                "test_col",
+                "n_tests",
+                "n_passed",
+                "percentage_passed",
+                "n_failed",
+                "percentage_failed",
+                "primary_key_col",
+                "timestamp",
+            )
         )
 
-        # Create DataFrame from the summary data
-        return self.spark.createDataFrame(summary_data, schema)
+        return summary_df
 
     @property
     def passed_tests(self) -> DataFrame:
         """
-        Returns a DataFrame containing only the rows where no test has failed (no value is False).
+        Returns a DataFrame containing only the rows where tests have passed (result is True).
 
         Returns:
-            DataFrame: A DataFrame containing only the rows where no test has failed.
+            DataFrame: A DataFrame containing only the rows where tests have passed.
         """
-        conditions = [
-            ((F.col(col) != F.lit(False)) | F.col(col).isNull())
-            for col in self.results.columns[len(self.non_test_cols) :]
-            if isinstance(self.results.schema[col].dataType, BooleanType)
-        ]
-
-        # If there are no boolean columns, return all rows
-        if not conditions:
-            return self.results
-
-        combined_condition = reduce(lambda x, y: x & y, conditions)
-
-        return self.results.filter(combined_condition)
+        return self.results.filter(F.col("test_result") == F.lit(True)).drop(
+            "primary_key_col", "timestamp"
+        )
 
     @property
     def failed_tests(self) -> DataFrame:
         """
-        Returns a DataFrame containing only the rows where any test has failed (at least one value is False).
+        Returns a DataFrame containing only the rows where tests have failed (result is False).
 
         Returns:
-            DataFrame: A DataFrame containing only the rows where any test has failed.
+            DataFrame: A DataFrame containing only the rows where tests have failed.
         """
-        conditions = [
-            F.col(col) == F.lit(False)
-            for col in self.results.columns[len(self.non_test_cols) :]
-            if isinstance(self.results.schema[col].dataType, BooleanType)
-        ]
-
-        # If there are no boolean columns, return an empty DataFrame
-        if not conditions:
-            return self.results.limit(0)
-
-        combined_condition = reduce(lambda x, y: x | y, conditions)
-
-        return self.results.filter(combined_condition)
+        return self.results.filter(F.col("test_result") == F.lit(False)).drop(
+            "primary_key_col", "timestamp"
+        )
