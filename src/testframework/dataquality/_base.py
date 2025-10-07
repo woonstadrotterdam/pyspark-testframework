@@ -18,7 +18,6 @@ class DataQualityTest(ABC):
         col: str,
         primary_key: str,
         nullable: bool,
-        result_col: Optional[str] = None,
     ) -> DataFrame:
         pass
 
@@ -61,7 +60,6 @@ class Test(DataQualityTest):
         col: str,
         primary_key: str,
         nullable: bool,
-        result_col: Optional[str] = None,
     ) -> DataFrame:
         """
         Applies the test to the specified column of the DataFrame and returns results in long-format.
@@ -71,13 +69,12 @@ class Test(DataQualityTest):
             col (str): The name of the column to test.
             primary_key (str): The column name of the primary key.
             nullable (bool): Flag indicating whether the column is allowed to have Null values.
-            result_col (Optional[str]): The name of the column to store the test result. By default None. If None, a default name will be generated.
 
         Returns:
             DataFrame: A DataFrame with the test results in long-format.
         """
         test_function = self._test_impl(df, col, nullable)
-        result_col = result_col if result_col else f"{col}__{self.name}"
+        result_col = f"{col}__{self.name}"
 
         # Apply the test result to the DataFrame
         test_result_df = df.withColumn(result_col, test_function)

@@ -96,9 +96,7 @@ def test_correct_value_custom_result_column_name(spark):
     df = create_dataframe(spark, data, schema)
 
     test = CorrectValue(correct_value="banana")
-    result_df = test.test(
-        df, col="value", primary_key="id", nullable=False, result_col="custom_result"
-    )
+    result_df = test.test(df, col="value", primary_key="id", nullable=False)
     result = [
         (row.primary_key, row.test_value, row.test_result)
         for row in result_df.collect()

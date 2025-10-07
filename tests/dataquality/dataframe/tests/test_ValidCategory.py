@@ -1,6 +1,7 @@
 import pytest
 from pyspark.sql import Row
 from pyspark.sql.types import IntegerType, StringType, StructField, StructType
+
 from testframework.dataquality.tests import ValidCategory
 
 
@@ -62,9 +63,7 @@ def test_valid_category_non_nullable(spark, sample_df):
 def test_valid_category_custom_result_column(spark, sample_df):
     valid_categories = {"A", "B", "C", "D"}
     test = ValidCategory(categories=valid_categories)
-    result_df = test.test(
-        sample_df, "category", primary_key="id", nullable=False, result_col="is_valid"
-    )
+    result_df = test.test(sample_df, "category", primary_key="id", nullable=False)
 
     expected_results = [
         True,
