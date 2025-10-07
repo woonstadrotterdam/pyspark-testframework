@@ -45,7 +45,7 @@ def test_ValidNumericRange_IntegerTypes(
     test = ValidNumericRange(min_value=min_value, max_value=max_value)
     result_df = test.test(df, "value", "primary_key", nullable=True)
 
-    actual_result = result_df.collect()[0]["value__ValidNumericRange"]
+    actual_result = result_df.collect()[0]["test_result"]
     assert actual_result == expected_result
 
 
@@ -86,7 +86,7 @@ def test_ValidNumericRange_FloatTypes(
     test = ValidNumericRange(min_value=min_value, max_value=max_value)
     result_df = test.test(df, "value", "primary_key", nullable=True)
 
-    actual_result = result_df.collect()[0]["value__ValidNumericRange"]
+    actual_result = result_df.collect()[0]["test_result"]
     assert actual_result == expected_result
 
 

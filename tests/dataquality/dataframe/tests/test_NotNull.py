@@ -35,7 +35,7 @@ def test_notnull(spark, sample_df):
     ]
 
     assert result_df.count() == 4
-    result = [row.name__NotNull for row in result_df.collect()]
+    result = [row.test_result for row in result_df.collect()]
     assert result == expected_results
 
 

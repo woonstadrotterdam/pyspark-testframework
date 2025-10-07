@@ -52,10 +52,8 @@ def test_ValidStringLength(
     )
     result_df = test_instance.test(mock_df, "text", "id", nullable=nullable)
 
-    col = test_instance.generate_result_col_name("text")
-
-    # Count the number of rows considered valid
-    valid_rows = result_df.filter(F.col(col)).count()
+    # Count the number of rows considered valid using long-format
+    valid_rows = result_df.filter(F.col("test_result")).count()
     # if nullable, the None value should be considered valid, thus add 1 to expected count
     expected_valid_count += int(nullable)
     assert (

@@ -1,5 +1,6 @@
 import pytest
 from pyspark.sql import DataFrame, SparkSession
+
 from testframework.dataquality.tests import (
     CorrectValue,
 )
@@ -18,9 +19,12 @@ def test_correct_value_with_integers(spark):
 
     test = CorrectValue(correct_value=200)
     result_df = test.test(df, col="value", primary_key="id", nullable=False)
-    result = result_df.collect()
+    result = [
+        (row.primary_key, row.test_value, row.test_result)
+        for row in result_df.collect()
+    ]
 
-    expected = [(1, 100, False), (2, 200, True), (3, 300, False)]
+    expected = [(1, "100", False), (2, "200", True), (3, "300", False)]
     assert result == expected
 
 
@@ -31,7 +35,10 @@ def test_correct_value_with_strings(spark):
 
     test = CorrectValue(correct_value="banana")
     result_df = test.test(df, col="value", primary_key="id", nullable=False)
-    result = result_df.collect()
+    result = [
+        (row.primary_key, row.test_value, row.test_result)
+        for row in result_df.collect()
+    ]
 
     expected = [("a", "apple", False), ("b", "banana", True), ("c", "cherry", False)]
     assert result == expected
@@ -44,7 +51,10 @@ def test_correct_value_nullable_column(spark):
 
     test = CorrectValue(correct_value=None)
     result_df = test.test(df, col="value", primary_key="id", nullable=True)
-    result = result_df.collect()
+    result = [
+        (row.primary_key, row.test_value, row.test_result)
+        for row in result_df.collect()
+    ]
 
     expected = [(1, "apple", False), (2, None, True), (3, "cherry", False)]
     assert result == expected
@@ -57,9 +67,12 @@ def test_correct_value_with_floats(spark):
 
     test = CorrectValue(correct_value=2.2)
     result_df = test.test(df, col="value", primary_key="id", nullable=False)
-    result = result_df.collect()
+    result = [
+        (row.primary_key, row.test_value, row.test_result)
+        for row in result_df.collect()
+    ]
 
-    expected = [(1, 1.1, False), (2, 2.2, True), (3, 3.3, False)]
+    expected = [(1, "1.1", False), (2, "2.2", True), (3, "3.3", False)]
     assert result == expected
 
 
@@ -86,7 +99,10 @@ def test_correct_value_custom_result_column_name(spark):
     result_df = test.test(
         df, col="value", primary_key="id", nullable=False, result_col="custom_result"
     )
-    result = result_df.collect()
+    result = [
+        (row.primary_key, row.test_value, row.test_result)
+        for row in result_df.collect()
+    ]
 
     expected = [(1, "apple", False), (2, "banana", True), (3, "cherry", False)]
     assert result == expected

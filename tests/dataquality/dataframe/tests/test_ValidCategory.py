@@ -36,7 +36,7 @@ def test_valid_category_all_valid(spark, sample_df):
     ]  # None is not in valid categories and nullable is False
 
     assert result_df.count() == 5
-    result = [row.category__ValidCategory for row in result_df.collect()]
+    result = [row.test_result for row in result_df.collect()]
     assert result == expected_results
 
 
@@ -48,7 +48,7 @@ def test_valid_category_with_null(spark, sample_df):
     expected_results = [True, True, True, True, True]  # Nullable is True
 
     assert result_df.count() == 5
-    result = [row.category__ValidCategory for row in result_df.collect()]
+    result = [row.test_result for row in result_df.collect()]
     assert result == expected_results
 
 
@@ -75,7 +75,7 @@ def test_valid_category_custom_result_column(spark, sample_df):
     ]  # None is not in valid categories
 
     assert result_df.count() == 5
-    result = [row.is_valid for row in result_df.collect()]
+    result = [row.test_result for row in result_df.collect()]
     assert result == expected_results
 
 
@@ -109,7 +109,7 @@ def test_valid_category_empty_categories(spark, sample_df):
     ]  # No valid categories, but nullable is True
 
     assert result_df.count() == 5
-    result = [row.category__ValidCategory for row in result_df.collect()]
+    result = [row.test_result for row in result_df.collect()]
     assert result == expected_results
 
 
@@ -121,7 +121,7 @@ def test_valid_category_partial_match(spark, sample_df):
     expected_results = [True, True, False, False, False]  # Only A and B are valid
 
     assert result_df.count() == 5
-    result = [row.category__ValidCategory for row in result_df.collect()]
+    result = [row.test_result for row in result_df.collect()]
     assert result == expected_results
 
 
@@ -148,7 +148,7 @@ def test_valid_category_case_sensitive_default(spark):
     expected_results = [True, False, True, False]  # Only uppercase letters should match
 
     assert result_df.count() == 4
-    result = [row.category__ValidCategory for row in result_df.collect()]
+    result = [row.test_result for row in result_df.collect()]
     assert result == expected_results
 
 
@@ -175,7 +175,7 @@ def test_valid_category_case_sensitive_true(spark):
     expected_results = [True, False, True, False]  # Only uppercase letters should match
 
     assert result_df.count() == 4
-    result = [row.category__ValidCategory for row in result_df.collect()]
+    result = [row.test_result for row in result_df.collect()]
     assert result == expected_results
 
 
@@ -215,7 +215,7 @@ def test_valid_category_case_insensitive(spark):
     ]  # Case insensitive matching
 
     assert result_df.count() == 8
-    result = [row.category__ValidCategory for row in result_df.collect()]
+    result = [row.test_result for row in result_df.collect()]
     assert result == expected_results
 
 
@@ -241,5 +241,5 @@ def test_valid_category_case_insensitive_with_null(spark):
     expected_results = [True, True, True]  # Case insensitive matching, null allowed
 
     assert result_df.count() == 3
-    result = [row.category__ValidCategory for row in result_df.collect()]
+    result = [row.test_result for row in result_df.collect()]
     assert result == expected_results
