@@ -94,6 +94,19 @@ def test_test_method_with_return_extra_cols(sample_df, spark):
     assert result_df.filter(result_df["name"].isNotNull()).count() == 5
 
 
+def test_test_method_with_context_cols(sample_df, spark):
+    tester = DataFrameTester(
+        df=sample_df, primary_key="id", spark=spark, context_cols=["name"]
+    )
+    valid_numeric_range = ValidNumericRange(min_value=30)
+    result_df = tester.test(col="value", test=valid_numeric_range, nullable=True)
+
+    # The returned result from .test should include non-test columns (primary key + extra)
+    assert "name" in result_df.columns
+    # The internal results should also keep the extra saved column
+    assert "name" in tester.results.columns
+
+
 def test_test_method_with_dummy_run(sample_df, spark):
     tester = DataFrameTester(df=sample_df, primary_key="id", spark=spark)
     valid_numeric_range = ValidNumericRange(min_value=30)
@@ -138,6 +151,29 @@ def test_add_custom_test_result(sample_df, spark):
     assert tester.descriptions["custom_test"] == "This is a custom test"
     assert updated_results.filter(col("custom_test")).count() == 2
     assert updated_results.filter(~col("custom_test")).count() == 3
+
+
+def test_add_custom_test_result_with_context_cols_and_return_extra(sample_df, spark):
+    tester = DataFrameTester(
+        df=sample_df, primary_key="id", spark=spark, context_cols=["name"]
+    )
+    custom_test_data = [(1, True), (2, False), (3, True), (4, False)]
+    custom_test_columns = ["id", "custom_test"]
+    custom_test_result = spark.createDataFrame(custom_test_data, custom_test_columns)
+
+    updated_results = tester.add_custom_test_result(
+        result=custom_test_result,
+        name="custom_test",
+        description="This is a custom test",
+        return_extra_cols=["value"],
+    )
+
+    # Should include the saved extra col ("name") and requested return extra col ("value")
+    assert "custom_test" in updated_results.columns
+    assert "name" in updated_results.columns
+    assert "value" in updated_results.columns
+    # The internal results should retain the saved extra column as well
+    assert "name" in tester.results.columns
 
 
 def test_add_custom_test_result_return_extra_cols(sample_df, spark):
