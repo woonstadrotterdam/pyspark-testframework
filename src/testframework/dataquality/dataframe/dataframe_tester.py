@@ -91,20 +91,20 @@ class DataFrameTester:
         else:
             self.non_test_cols = [self.primary_key]
 
-        # Create empty long-format DataFrame schema
+        # Create empty long-format DataFrame schema (ordered for downstream selects)
         schema = StructType(
             [
                 StructField(
                     "primary_key", StringType(), True
                 ),  # Concatenated primary key
+                StructField("test_name", StringType(), True),  # Test name
+                StructField("test_result", BooleanType(), True),  # Test result
+                StructField("test_value", StringType(), True),  # Actual value tested
+                StructField("test_description", StringType(), True),  # Test description
+                StructField("test_col", StringType(), True),  # Column tested
                 StructField(
                     "primary_key_col", StringType(), True
                 ),  # Primary key column name
-                StructField("test_name", StringType(), True),  # Test name
-                StructField("test_col", StringType(), True),  # Column tested
-                StructField("test_value", StringType(), True),  # Actual value tested
-                StructField("test_result", BooleanType(), True),  # Test result
-                StructField("test_description", StringType(), True),  # Test description
                 StructField("timestamp", TimestampType(), True),  # UTC timestamp
             ]
         )
@@ -238,15 +238,15 @@ class DataFrameTester:
         # Tests now return long-format DataFrames directly
         long_format_result = test.test(filtered_df, col, self.primary_key, nullable)
 
-        # Add the timestamp and primary_key_col columns
+        # Add the timestamp and primary_key_col columns (and order them)
         long_format_result = long_format_result.select(
             long_format_result.primary_key,
-            F.lit(self.primary_key).alias("primary_key_col"),
             long_format_result.test_name,
-            long_format_result.test_col,
-            long_format_result.test_value,
             long_format_result.test_result,
+            long_format_result.test_value,
             long_format_result.test_description,
+            long_format_result.test_col,
+            F.lit(self.primary_key).alias("primary_key_col"),
             self.datetime.alias("timestamp"),
         )
 
@@ -274,12 +274,12 @@ class DataFrameTester:
                     how="left",
                 ).select(
                     long_format_result.primary_key,
-                    long_format_result.primary_key_col,
                     long_format_result.test_name,
-                    long_format_result.test_col,
-                    long_format_result.test_value,
                     long_format_result.test_result,
+                    long_format_result.test_value,
                     long_format_result.test_description,
+                    long_format_result.test_col,
+                    long_format_result.primary_key_col,
                     long_format_result.timestamp,
                     *[F.col(col).alias(col) for col in context_cols_to_include],
                 )
@@ -314,8 +314,8 @@ class DataFrameTester:
                     *[F.col(col) for col in extra_cols_filtered],
                 )
 
-        return long_format_result.drop(
-            "primary_key_col", "timestamp", "test_description"
+        return self._standardize_return_order(
+            long_format_result.drop("primary_key_col", "timestamp")
         )
 
     def _union_with_schema_alignment(self, df1: DataFrame, df2: DataFrame) -> DataFrame:
@@ -329,29 +329,51 @@ class DataFrameTester:
         Returns:
             DataFrame: Unioned DataFrame with aligned schema
         """
-        # Get all unique column names from both DataFrames
-        all_columns = set(df1.columns) | set(df2.columns)
+        # Determine desired column order: keep df1 order, then append new columns from df2 in their order
+        desired_order = list(df1.columns) + [
+            c for c in df2.columns if c not in df1.columns
+        ]
 
-        # Create select expressions for both DataFrames, filling missing columns with null
-        select_exprs_df1 = []
-        select_exprs_df2 = []
-
-        for col in sorted(all_columns):
-            if col in df1.columns:
-                select_exprs_df1.append(F.col(col))
-            else:
-                select_exprs_df1.append(F.lit(None).alias(col))
-
-            if col in df2.columns:
-                select_exprs_df2.append(F.col(col))
-            else:
-                select_exprs_df2.append(F.lit(None).alias(col))
+        # Create select expressions for both DataFrames in the desired order, filling missing columns with nulls
+        select_exprs_df1 = [
+            F.col(c) if c in df1.columns else F.lit(None).alias(c)
+            for c in desired_order
+        ]
+        select_exprs_df2 = [
+            F.col(c) if c in df2.columns else F.lit(None).alias(c)
+            for c in desired_order
+        ]
 
         # Apply the select expressions and union
         df1_aligned = df1.select(*select_exprs_df1)
         df2_aligned = df2.select(*select_exprs_df2)
 
         return df1_aligned.union(df2_aligned)
+
+    def _standardize_return_order(self, df: DataFrame) -> DataFrame:
+        """
+        Ensure a consistent column order for returned DataFrames, led by the
+        base columns as defined by the .test() method. Any additional columns
+        (context/extra) are appended in their existing order.
+
+        The canonical leading order is:
+        ["primary_key", "test_name", "test_result", "test_value", "test_description", "test_col"].
+        """
+        base_order = [
+            "primary_key",
+            "test_name",
+            "test_result",
+            "test_value",
+            "test_description",
+            "test_col",
+        ]
+
+        # Keep only columns that exist; append any remaining columns in existing order
+        present_leading = [c for c in base_order if c in df.columns]
+        trailing = [c for c in df.columns if c not in present_leading]
+        return df.select(
+            *([F.col(c) for c in present_leading] + [F.col(c) for c in trailing])
+        )
 
     def add_custom_test_result(
         self,
@@ -429,12 +451,12 @@ class DataFrameTester:
                 how="left",
             ).select(
                 long_format_result.primary_key,
-                long_format_result.primary_key_col,
                 long_format_result.test_name,
-                long_format_result.test_col,
-                long_format_result.test_value,
                 long_format_result.test_result,
+                long_format_result.test_value,
                 long_format_result.test_description,
+                long_format_result.test_col,
+                long_format_result.primary_key_col,
                 long_format_result.timestamp,
                 *[
                     F.col(col).alias(col)
@@ -478,7 +500,7 @@ class DataFrameTester:
                     *[F.col(col) for col in extra_cols_filtered],
                 )
 
-        return long_format_result
+        return self._standardize_return_order(long_format_result)
 
     def _convert_custom_to_long_format(
         self,
@@ -508,15 +530,15 @@ class DataFrameTester:
         else:
             test_value_expr = F.lit("N/A")
 
-        # Select columns for long-format
+        # Select columns for long-format (ordered)
         select_exprs = [
             pk_expr.alias("primary_key"),
-            F.lit(self.primary_key).alias("primary_key_col"),
             F.lit(name).alias("test_name"),
-            F.lit("custom_test_result").alias("test_col"),
-            test_value_expr.alias("test_value"),
             F.col(name).alias("test_result"),
+            test_value_expr.alias("test_value"),
             F.lit(description if description else name).alias("test_description"),
+            F.lit("custom_test_result").alias("test_col"),
+            F.lit(self.primary_key).alias("primary_key_col"),
             self.datetime.alias("timestamp"),
         ]
 
@@ -556,12 +578,12 @@ class DataFrameTester:
                     StructField("test_name", StringType(), True),
                     StructField("test_col", StringType(), True),
                     StructField("test_description", StringType(), True),
-                    StructField("primary_key_col", StringType(), True),
                     StructField("n_tests", LongType(), True),
                     StructField("n_passed", LongType(), True),
                     StructField("percentage_passed", DoubleType(), True),
                     StructField("n_failed", LongType(), True),
                     StructField("percentage_failed", DoubleType(), True),
+                    StructField("primary_key_col", StringType(), True),
                     StructField("timestamp", TimestampType(), True),
                 ]
             )
@@ -616,8 +638,10 @@ class DataFrameTester:
         Returns:
             DataFrame: A DataFrame containing only the rows where tests have passed.
         """
-        return self.results.filter(F.col("test_result") == F.lit(True)).drop(
-            "primary_key_col", "timestamp"
+        return self._standardize_return_order(
+            self.results.filter(F.col("test_result") == F.lit(True)).drop(
+                "primary_key_col", "timestamp"
+            )
         )
 
     @property
@@ -628,6 +652,8 @@ class DataFrameTester:
         Returns:
             DataFrame: A DataFrame containing only the rows where tests have failed.
         """
-        return self.results.filter(F.col("test_result") == F.lit(False)).drop(
-            "primary_key_col", "timestamp"
+        return self._standardize_return_order(
+            self.results.filter(F.col("test_result") == F.lit(False)).drop(
+                "primary_key_col", "timestamp"
+            )
         )

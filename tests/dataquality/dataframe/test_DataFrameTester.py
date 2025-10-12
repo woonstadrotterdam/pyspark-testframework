@@ -337,7 +337,7 @@ def test_summary(sample_df, spark):
 
     # Verify the summary for the test
     test_summary = summary_data[0]
-    assert test_summary["test_name"] == "ValidNumericRange"
+    assert test_summary["test_name"] == "value__ValidNumericRange"
     assert test_summary["test_col"] == "value"
     assert test_summary["primary_key_col"] == "id"
     assert test_summary["n_tests"] == 5
@@ -376,7 +376,7 @@ def test_summary_after_filter(sample_df, spark):
 
     # Verify the summary for the test
     test_summary = summary_data[0]
-    assert test_summary["test_name"] == "ValidNumericRange"
+    assert test_summary["test_name"] == "value__ValidNumericRange"
     assert test_summary["test_col"] == "value"
     assert test_summary["primary_key_col"] == "id"
     assert test_summary["n_tests"] == 4
