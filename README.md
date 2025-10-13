@@ -122,15 +122,15 @@ df_tester.test(
 ).show(truncate=False)
 ```
 
-    +-----------+-----------------+--------+--------------------+-----------+
-    |primary_key|test_name        |test_col|test_value          |test_result|
-    +-----------+-----------------+--------+--------------------+-----------+
-    |1          |ValidStreetFormat|street  |Rochussenstraat     |true       |
-    |2          |ValidStreetFormat|street  |Coolsingel          |true       |
-    |3          |ValidStreetFormat|street  |%Witte de Withstraat|false      |
-    |4          |ValidStreetFormat|street  |Lijnbaan            |true       |
-    |5          |ValidStreetFormat|street  |null                |false      |
-    +-----------+-----------------+--------+--------------------+-----------+
+    +-----------+-------------------------+-----------+--------------------+--------------------------------------+--------+
+    |primary_key|test_name                |test_result|test_value          |test_description                      |test_col|
+    +-----------+-------------------------+-----------+--------------------+--------------------------------------+--------+
+    |1          |street__ValidStreetFormat|true       |Rochussenstraat     |Street is in valid Dutch street format|street  |
+    |2          |street__ValidStreetFormat|true       |Coolsingel          |Street is in valid Dutch street format|street  |
+    |3          |street__ValidStreetFormat|false      |%Witte de Withstraat|Street is in valid Dutch street format|street  |
+    |4          |street__ValidStreetFormat|true       |Lijnbaan            |Street is in valid Dutch street format|street  |
+    |5          |street__ValidStreetFormat|false      |null                |Street is in valid Dutch street format|street  |
+    +-----------+-------------------------+-----------+--------------------+--------------------------------------+--------+
 
 **Run the `IntegerString` test on the _number_ column**
 
@@ -148,11 +148,11 @@ df_tester.test(
 ).show()
 ```
 
-    +-----------+-----------------+------------+----------+-----------+
-    |primary_key|        test_name|    test_col|test_value|test_result|
-    +-----------+-----------------+------------+----------+-----------+
-    |          4|ValidNumericRange|house_number|        -3|      false|
-    +-----------+-----------------+------------+----------+-----------+
+    +-----------+--------------------+-----------+----------+-----------------+------------+
+    |primary_key|           test_name|test_result|test_value| test_description|    test_col|
+    +-----------+--------------------+-----------+----------+-----------------+------------+
+    |          4|house_number__Val...|      false|        -3|ValidNumericRange|house_number|
+    +-----------+--------------------+-----------+----------+-----------------+------------+
 
 **Let's take a look at the test results of the DataFrame using the `.results` attribute.**
 
@@ -160,20 +160,20 @@ df_tester.test(
 df_tester.results.show(truncate=False)
 ```
 
-    +-----------+---------------+------------+--------------------------------------+-----------------+-----------+--------------------+-----------------------+
-    |primary_key|primary_key_col|test_col    |test_description                      |test_name        |test_result|test_value          |timestamp              |
-    +-----------+---------------+------------+--------------------------------------+-----------------+-----------+--------------------+-----------------------+
-    |1          |id             |street      |Street is in valid Dutch street format|ValidStreetFormat|true       |Rochussenstraat     |2025-10-07 08:25:51.433|
-    |2          |id             |street      |Street is in valid Dutch street format|ValidStreetFormat|true       |Coolsingel          |2025-10-07 08:25:51.433|
-    |3          |id             |street      |Street is in valid Dutch street format|ValidStreetFormat|false      |%Witte de Withstraat|2025-10-07 08:25:51.433|
-    |4          |id             |street      |Street is in valid Dutch street format|ValidStreetFormat|true       |Lijnbaan            |2025-10-07 08:25:51.433|
-    |5          |id             |street      |Street is in valid Dutch street format|ValidStreetFormat|false      |null                |2025-10-07 08:25:51.433|
-    |1          |id             |house_number|ValidNumericRange                     |ValidNumericRange|true       |27                  |2025-10-07 08:25:51.433|
-    |2          |id             |house_number|ValidNumericRange                     |ValidNumericRange|true       |31                  |2025-10-07 08:25:51.433|
-    |3          |id             |house_number|ValidNumericRange                     |ValidNumericRange|true       |27                  |2025-10-07 08:25:51.433|
-    |4          |id             |house_number|ValidNumericRange                     |ValidNumericRange|false      |-3                  |2025-10-07 08:25:51.433|
-    |5          |id             |house_number|ValidNumericRange                     |ValidNumericRange|true       |13                  |2025-10-07 08:25:51.433|
-    +-----------+---------------+------------+--------------------------------------+-----------------+-----------+--------------------+-----------------------+
+    +-----------+-------------------------------+-----------+--------------------+--------------------------------------+------------+---------------+-----------------------+
+    |primary_key|test_name                      |test_result|test_value          |test_description                      |test_col    |primary_key_col|timestamp              |
+    +-----------+-------------------------------+-----------+--------------------+--------------------------------------+------------+---------------+-----------------------+
+    |1          |street__ValidStreetFormat      |true       |Rochussenstraat     |Street is in valid Dutch street format|street      |id             |2025-10-13 15:30:53.094|
+    |2          |street__ValidStreetFormat      |true       |Coolsingel          |Street is in valid Dutch street format|street      |id             |2025-10-13 15:30:53.094|
+    |3          |street__ValidStreetFormat      |false      |%Witte de Withstraat|Street is in valid Dutch street format|street      |id             |2025-10-13 15:30:53.094|
+    |4          |street__ValidStreetFormat      |true       |Lijnbaan            |Street is in valid Dutch street format|street      |id             |2025-10-13 15:30:53.094|
+    |5          |street__ValidStreetFormat      |false      |null                |Street is in valid Dutch street format|street      |id             |2025-10-13 15:30:53.094|
+    |1          |house_number__ValidNumericRange|true       |27                  |ValidNumericRange                     |house_number|id             |2025-10-13 15:30:53.094|
+    |2          |house_number__ValidNumericRange|true       |31                  |ValidNumericRange                     |house_number|id             |2025-10-13 15:30:53.094|
+    |3          |house_number__ValidNumericRange|true       |27                  |ValidNumericRange                     |house_number|id             |2025-10-13 15:30:53.094|
+    |4          |house_number__ValidNumericRange|false      |-3                  |ValidNumericRange                     |house_number|id             |2025-10-13 15:30:53.094|
+    |5          |house_number__ValidNumericRange|true       |13                  |ValidNumericRange                     |house_number|id             |2025-10-13 15:30:53.094|
+    +-----------+-------------------------------+-----------+--------------------+--------------------------------------+------------+---------------+-----------------------+
 
 ### Custom tests
 
@@ -251,12 +251,12 @@ df_tester.add_custom_test_result(
 ).show(truncate=False)
 ```
 
-    +-----------+---------------+------------+------------------+----------+-----------+--------------------+----------------------+
-    |primary_key|primary_key_col|test_name   |test_col          |test_value|test_result|test_description    |timestamp             |
-    +-----------+---------------+------------+------------------+----------+-----------+--------------------+----------------------+
-    |1          |id             |has_bathroom|custom_test_result|N/A       |true       |House has a bathroom|2025-10-07 08:25:52.74|
-    |2          |id             |has_bathroom|custom_test_result|N/A       |false      |House has a bathroom|2025-10-07 08:25:52.74|
-    +-----------+---------------+------------+------------------+----------+-----------+--------------------+----------------------+
+    +-----------+------------+-----------+-----------------------+--------------------+---------------------+---------------+-----------------------+
+    |primary_key|test_name   |test_result|test_value             |test_description    |test_col             |primary_key_col|timestamp              |
+    +-----------+------------+-----------+-----------------------+--------------------+---------------------+---------------+-----------------------+
+    |1          |has_bathroom|true       |__custom__test__value__|House has a bathroom|__custom__test__col__|id             |2025-10-13 15:30:59.902|
+    |2          |has_bathroom|false      |__custom__test__value__|House has a bathroom|__custom__test__col__|id             |2025-10-13 15:30:59.902|
+    +-----------+------------+-----------+-----------------------+--------------------+---------------------+---------------+-----------------------+
 
 **Despite that the data whether a house has a bath room is not available in the house DataFrame; we can still add the custom test to the `DataFrameTester` object.**
 
@@ -264,22 +264,22 @@ df_tester.add_custom_test_result(
 df_tester.results.show(truncate=False)
 ```
 
-    +-----------+---------------+------------------+--------------------------------------+-----------------+-----------+--------------------+-----------------------+
-    |primary_key|primary_key_col|test_col          |test_description                      |test_name        |test_result|test_value          |timestamp              |
-    +-----------+---------------+------------------+--------------------------------------+-----------------+-----------+--------------------+-----------------------+
-    |1          |id             |street            |Street is in valid Dutch street format|ValidStreetFormat|true       |Rochussenstraat     |2025-10-07 08:25:52.862|
-    |2          |id             |street            |Street is in valid Dutch street format|ValidStreetFormat|true       |Coolsingel          |2025-10-07 08:25:52.862|
-    |3          |id             |street            |Street is in valid Dutch street format|ValidStreetFormat|false      |%Witte de Withstraat|2025-10-07 08:25:52.862|
-    |4          |id             |street            |Street is in valid Dutch street format|ValidStreetFormat|true       |Lijnbaan            |2025-10-07 08:25:52.862|
-    |5          |id             |street            |Street is in valid Dutch street format|ValidStreetFormat|false      |null                |2025-10-07 08:25:52.862|
-    |1          |id             |house_number      |ValidNumericRange                     |ValidNumericRange|true       |27                  |2025-10-07 08:25:52.862|
-    |2          |id             |house_number      |ValidNumericRange                     |ValidNumericRange|true       |31                  |2025-10-07 08:25:52.862|
-    |3          |id             |house_number      |ValidNumericRange                     |ValidNumericRange|true       |27                  |2025-10-07 08:25:52.862|
-    |4          |id             |house_number      |ValidNumericRange                     |ValidNumericRange|false      |-3                  |2025-10-07 08:25:52.862|
-    |5          |id             |house_number      |ValidNumericRange                     |ValidNumericRange|true       |13                  |2025-10-07 08:25:52.862|
-    |1          |id             |custom_test_result|House has a bathroom                  |has_bathroom     |true       |N/A                 |2025-10-07 08:25:52.862|
-    |2          |id             |custom_test_result|House has a bathroom                  |has_bathroom     |false      |N/A                 |2025-10-07 08:25:52.862|
-    +-----------+---------------+------------------+--------------------------------------+-----------------+-----------+--------------------+-----------------------+
+    +-----------+-------------------------------+-----------+-----------------------+--------------------------------------+---------------------+---------------+-----------------------+
+    |primary_key|test_name                      |test_result|test_value             |test_description                      |test_col             |primary_key_col|timestamp              |
+    +-----------+-------------------------------+-----------+-----------------------+--------------------------------------+---------------------+---------------+-----------------------+
+    |1          |street__ValidStreetFormat      |true       |Rochussenstraat        |Street is in valid Dutch street format|street               |id             |2025-10-13 15:31:20.538|
+    |2          |street__ValidStreetFormat      |true       |Coolsingel             |Street is in valid Dutch street format|street               |id             |2025-10-13 15:31:20.538|
+    |3          |street__ValidStreetFormat      |false      |%Witte de Withstraat   |Street is in valid Dutch street format|street               |id             |2025-10-13 15:31:20.538|
+    |4          |street__ValidStreetFormat      |true       |Lijnbaan               |Street is in valid Dutch street format|street               |id             |2025-10-13 15:31:20.538|
+    |5          |street__ValidStreetFormat      |false      |null                   |Street is in valid Dutch street format|street               |id             |2025-10-13 15:31:20.538|
+    |1          |house_number__ValidNumericRange|true       |27                     |ValidNumericRange                     |house_number         |id             |2025-10-13 15:31:20.538|
+    |2          |house_number__ValidNumericRange|true       |31                     |ValidNumericRange                     |house_number         |id             |2025-10-13 15:31:20.538|
+    |3          |house_number__ValidNumericRange|true       |27                     |ValidNumericRange                     |house_number         |id             |2025-10-13 15:31:20.538|
+    |4          |house_number__ValidNumericRange|false      |-3                     |ValidNumericRange                     |house_number         |id             |2025-10-13 15:31:20.538|
+    |5          |house_number__ValidNumericRange|true       |13                     |ValidNumericRange                     |house_number         |id             |2025-10-13 15:31:20.538|
+    |1          |has_bathroom                   |true       |__custom__test__value__|House has a bathroom                  |__custom__test__col__|id             |2025-10-13 15:31:20.538|
+    |2          |has_bathroom                   |false      |__custom__test__value__|House has a bathroom                  |__custom__test__col__|id             |2025-10-13 15:31:20.538|
+    +-----------+-------------------------------+-----------+-----------------------+--------------------------------------+---------------------+---------------+-----------------------+
 
 **We can also get a summary of the test results using the `.summary` attribute.**
 
@@ -287,21 +287,13 @@ df_tester.results.show(truncate=False)
 df_tester.summary.show(truncate=False)
 ```
 
-    Java HotSpot(TM) 64-Bit Server VM warning: CodeCache is full. Compiler has been disabled.
-    Java HotSpot(TM) 64-Bit Server VM warning: Try increasing the code cache size using -XX:ReservedCodeCacheSize=
-
-
-    CodeCache: size=131072Kb used=34412Kb max_used=34428Kb free=96659Kb
-     bounds [0x000000010a1f8000, 0x000000010c3c8000, 0x00000001121f8000]
-     total_blobs=12180 nmethods=11270 adapters=820
-     compilation: disabled (not enough contiguous free space left)
-    +-----------------+--------------------------------------+------------------+-------+--------+-----------------+--------+-----------------+---------------+-----------------------+
-    |test_name        |test_description                      |test_col          |n_tests|n_passed|percentage_passed|n_failed|percentage_failed|primary_key_col|timestamp              |
-    +-----------------+--------------------------------------+------------------+-------+--------+-----------------+--------+-----------------+---------------+-----------------------+
-    |ValidNumericRange|ValidNumericRange                     |house_number      |5      |4       |80.0             |1       |20.0             |id             |2025-10-07 08:25:53.558|
-    |ValidStreetFormat|Street is in valid Dutch street format|street            |5      |3       |60.0             |2       |40.0             |id             |2025-10-07 08:25:53.558|
-    |has_bathroom     |House has a bathroom                  |custom_test_result|2      |1       |50.0             |1       |50.0             |id             |2025-10-07 08:25:53.558|
-    +-----------------+--------------------------------------+------------------+-------+--------+-----------------+--------+-----------------+---------------+-----------------------+
+    +-------------------------------+--------------------------------------+---------------------+-------+--------+-----------------+--------+-----------------+---------------+-----------------------+
+    |test_name                      |test_description                      |test_col             |n_tests|n_passed|percentage_passed|n_failed|percentage_failed|primary_key_col|timestamp              |
+    +-------------------------------+--------------------------------------+---------------------+-------+--------+-----------------+--------+-----------------+---------------+-----------------------+
+    |has_bathroom                   |House has a bathroom                  |__custom__test__col__|2      |1       |50.0             |1       |50.0             |id             |2025-10-13 15:31:33.733|
+    |house_number__ValidNumericRange|ValidNumericRange                     |house_number         |5      |4       |80.0             |1       |20.0             |id             |2025-10-13 15:31:33.733|
+    |street__ValidStreetFormat      |Street is in valid Dutch street format|street               |5      |3       |60.0             |2       |40.0             |id             |2025-10-13 15:31:33.733|
+    +-------------------------------+--------------------------------------+---------------------+-------+--------+-----------------+--------+-----------------+---------------+-----------------------+
 
 **If you want to see all rows that failed any of the tests, you can use the `.failed_tests` attribute.**
 
@@ -309,14 +301,14 @@ df_tester.summary.show(truncate=False)
 df_tester.failed_tests.show(truncate=False)
 ```
 
-    +-----------+------------------+--------------------------------------+-----------------+-----------+--------------------+
-    |primary_key|test_col          |test_description                      |test_name        |test_result|test_value          |
-    +-----------+------------------+--------------------------------------+-----------------+-----------+--------------------+
-    |3          |street            |Street is in valid Dutch street format|ValidStreetFormat|false      |%Witte de Withstraat|
-    |5          |street            |Street is in valid Dutch street format|ValidStreetFormat|false      |null                |
-    |4          |house_number      |ValidNumericRange                     |ValidNumericRange|false      |-3                  |
-    |2          |custom_test_result|House has a bathroom                  |has_bathroom     |false      |N/A                 |
-    +-----------+------------------+--------------------------------------+-----------------+-----------+--------------------+
+    +-----------+-------------------------------+-----------+-----------------------+--------------------------------------+---------------------+
+    |primary_key|test_name                      |test_result|test_value             |test_description                      |test_col             |
+    +-----------+-------------------------------+-----------+-----------------------+--------------------------------------+---------------------+
+    |3          |street__ValidStreetFormat      |false      |%Witte de Withstraat   |Street is in valid Dutch street format|street               |
+    |5          |street__ValidStreetFormat      |false      |null                   |Street is in valid Dutch street format|street               |
+    |4          |house_number__ValidNumericRange|false      |-3                     |ValidNumericRange                     |house_number         |
+    |2          |has_bathroom                   |false      |__custom__test__value__|House has a bathroom                  |__custom__test__col__|
+    +-----------+-------------------------------+-----------+-----------------------+--------------------------------------+---------------------+
 
 **Of course, you can also see all rows that passed all tests using the `.passed_tests` attribute.**
 
@@ -324,15 +316,15 @@ df_tester.failed_tests.show(truncate=False)
 df_tester.passed_tests.show(truncate=False)
 ```
 
-    +-----------+------------------+--------------------------------------+-----------------+-----------+---------------+
-    |primary_key|test_col          |test_description                      |test_name        |test_result|test_value     |
-    +-----------+------------------+--------------------------------------+-----------------+-----------+---------------+
-    |1          |street            |Street is in valid Dutch street format|ValidStreetFormat|true       |Rochussenstraat|
-    |2          |street            |Street is in valid Dutch street format|ValidStreetFormat|true       |Coolsingel     |
-    |4          |street            |Street is in valid Dutch street format|ValidStreetFormat|true       |Lijnbaan       |
-    |1          |house_number      |ValidNumericRange                     |ValidNumericRange|true       |27             |
-    |2          |house_number      |ValidNumericRange                     |ValidNumericRange|true       |31             |
-    |3          |house_number      |ValidNumericRange                     |ValidNumericRange|true       |27             |
-    |5          |house_number      |ValidNumericRange                     |ValidNumericRange|true       |13             |
-    |1          |custom_test_result|House has a bathroom                  |has_bathroom     |true       |N/A            |
-    +-----------+------------------+--------------------------------------+-----------------+-----------+---------------+
+    +-----------+-------------------------------+-----------+-----------------------+--------------------------------------+---------------------+
+    |primary_key|test_name                      |test_result|test_value             |test_description                      |test_col             |
+    +-----------+-------------------------------+-----------+-----------------------+--------------------------------------+---------------------+
+    |1          |street__ValidStreetFormat      |true       |Rochussenstraat        |Street is in valid Dutch street format|street               |
+    |2          |street__ValidStreetFormat      |true       |Coolsingel             |Street is in valid Dutch street format|street               |
+    |4          |street__ValidStreetFormat      |true       |Lijnbaan               |Street is in valid Dutch street format|street               |
+    |1          |house_number__ValidNumericRange|true       |27                     |ValidNumericRange                     |house_number         |
+    |2          |house_number__ValidNumericRange|true       |31                     |ValidNumericRange                     |house_number         |
+    |3          |house_number__ValidNumericRange|true       |27                     |ValidNumericRange                     |house_number         |
+    |5          |house_number__ValidNumericRange|true       |13                     |ValidNumericRange                     |house_number         |
+    |1          |has_bathroom                   |true       |__custom__test__value__|House has a bathroom                  |__custom__test__col__|
+    +-----------+-------------------------------+-----------+-----------------------+--------------------------------------+---------------------+

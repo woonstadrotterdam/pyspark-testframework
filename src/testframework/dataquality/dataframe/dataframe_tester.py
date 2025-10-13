@@ -395,7 +395,7 @@ class DataFrameTester:
             fillna_value (Optional[Any]): The value to fill nulls in the test result column after left joining on the primary_key. Defaults to None.
             return_extra_cols (Optional[list[str]]): Return extra columns from the original dataframe (not saved to results). Defaults to None.
             return_failed_rows (bool): If True, return only the rows where the test has failed. Defaults to False.
-            value_column (Optional[str]): The name of the column containing the actual values being tested. If provided, these values will be used in the test_value field instead of "N/A". Defaults to None.
+            value_column (Optional[str]): The name of the column containing the actual values being tested. If provided, these values will be used in the test_value field instead of "__custom__test__value__". Defaults to None.
 
         Returns:
             DataFrame: The updated test DataFrame with the custom test results in long-format.
@@ -528,7 +528,7 @@ class DataFrameTester:
         if value_column is not None:
             test_value_expr = F.col(value_column).cast(StringType())
         else:
-            test_value_expr = F.lit("N/A")
+            test_value_expr = F.lit("__custom__test__value__")
 
         # Select columns for long-format (ordered)
         select_exprs = [
@@ -537,7 +537,7 @@ class DataFrameTester:
             F.col(name).alias("test_result"),
             test_value_expr.alias("test_value"),
             F.lit(description if description else name).alias("test_description"),
-            F.lit("custom_test_result").alias("test_col"),
+            F.lit("__custom__test__col__").alias("test_col"),
             F.lit(self.primary_key).alias("primary_key_col"),
             self.datetime.alias("timestamp"),
         ]
