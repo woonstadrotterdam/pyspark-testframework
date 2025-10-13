@@ -326,11 +326,18 @@ class DataFrameTester:
             new_test_results = new_test_results.filter(F.col(name) == F.lit(False))
 
         if return_extra_cols:
-            return new_test_results.join(
+            # Only return primary_key + context_cols + this test's result + requested extra cols
+            base_cols = self.non_test_cols + [name]
+            joined = new_test_results.select(base_cols).join(
                 self.df.select(*self.primary_key, *return_extra_cols),
                 on=self.primary_key,
                 how="left",
             )
+            # Ensure deterministic column order and avoid duplicates
+            extra_cols_deduped = [
+                c for c in return_extra_cols if c not in self.non_test_cols
+            ]
+            return joined.select(*(self.non_test_cols + [name] + extra_cols_deduped))
 
         return new_test_results.select(self.non_test_cols + [name])
 
