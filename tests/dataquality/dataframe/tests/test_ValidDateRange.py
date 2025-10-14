@@ -54,7 +54,7 @@ def test_ValidDateRange(
     test = ValidDateRange(min_date=min_date, max_date=max_date)
     result_df = test.test(df, "value", "primary_key", nullable=True)
 
-    actual_result = result_df.collect()[0]["value__ValidDateRange"]
+    actual_result = result_df.collect()[0]["test_result"]
     assert actual_result == expected_result
 
 
@@ -82,7 +82,7 @@ def test_ValidDateRange_different_formats(
     test = ValidDateRange(min_date=min_date, max_date=max_date, date_format=date_format)
     result_df = test.test(df, "value", "primary_key", nullable=True)
 
-    actual_result = result_df.collect()[0]["value__ValidDateRange"]
+    actual_result = result_df.collect()[0]["test_result"]
     assert actual_result == expected_result
 
 
@@ -112,7 +112,7 @@ def test_ValidDateRange_datetime(spark, min_date, max_date):
     test = ValidDateRange(min_date=min_date, max_date=max_date)
     result_df = test.test(df, "value", "primary_key", nullable=True)
 
-    actual_result = result_df.collect()[0]["value__ValidDateRange"]
+    actual_result = result_df.collect()[0]["test_result"]
     assert actual_result
 
 
@@ -137,5 +137,5 @@ def test_ValidDateRange_date(spark, min_date, max_date):
     test = ValidDateRange(min_date=min_date, max_date=max_date)
     result_df = test.test(df, "value", "primary_key", nullable=True)
 
-    actual_result = result_df.collect()[0]["value__ValidDateRange"]
+    actual_result = result_df.collect()[0]["test_result"]
     assert actual_result

@@ -1,4 +1,5 @@
 from pyspark.sql.types import BooleanType, StringType, StructField, StructType
+
 from testframework.dataquality.tests.regex_tst import RegexTest
 
 
@@ -19,7 +20,7 @@ def test_regex_test_method_nullable_false(spark):
 
     regex_test = RegexTest(name="email_test", pattern=r"^[\w\.-]+@[\w\.-]+\.\w+$")
     result_df = regex_test.test(df, col="value", primary_key="id", nullable=False)
-    results = result_df.select("id", "value", "value__email_test").collect()
+    results = result_df.select("primary_key", "test_value", "test_result").collect()
 
     expected_results = [
         ("1", "test@example.com", True),  # Matches the regex
@@ -29,7 +30,7 @@ def test_regex_test_method_nullable_false(spark):
     ]
 
     assert [
-        (row.id, row.value, row.value__email_test) for row in results
+        (row.primary_key, row.test_value, row.test_result) for row in results
     ] == expected_results
 
 
@@ -50,7 +51,7 @@ def test_regex_test_method_without_nulls_nullable_true(spark):
 
     regex_test = RegexTest(name="email_test", pattern=r"^[\w\.-]+@[\w\.-]+\.\w+$")
     result_df = regex_test.test(df, col="value", primary_key="id", nullable=True)
-    results = result_df.select("id", "value", "value__email_test").collect()
+    results = result_df.select("primary_key", "test_value", "test_result").collect()
 
     expected_results = [
         ("1", "test@example.com", True),  # Matches the regex
@@ -60,7 +61,7 @@ def test_regex_test_method_without_nulls_nullable_true(spark):
     ]
 
     assert [
-        (row.id, row.value, row.value__email_test) for row in results
+        (row.primary_key, row.test_value, row.test_result) for row in results
     ] == expected_results
 
 
@@ -81,7 +82,7 @@ def test_regex_test_method_without_nulls_nullable_false(spark):
 
     regex_test = RegexTest(name="email_test", pattern=r"^[\w\.-]+@[\w\.-]+\.\w+$")
     result_df = regex_test.test(df, col="value", primary_key="id", nullable=False)
-    results = result_df.select("id", "value", "value__email_test").collect()
+    results = result_df.select("primary_key", "test_value", "test_result").collect()
 
     expected_results = [
         ("1", "test@example.com", True),  # Matches the regex
@@ -91,7 +92,7 @@ def test_regex_test_method_without_nulls_nullable_false(spark):
     ]
 
     assert [
-        (row.id, row.value, row.value__email_test) for row in results
+        (row.primary_key, row.test_value, row.test_result) for row in results
     ] == expected_results
 
 
@@ -107,7 +108,7 @@ def test_regex_test_method_all_nulls_nullable_true(spark):
 
     regex_test = RegexTest(name="email_test", pattern=r"^[\w\.-]+@[\w\.-]+\.\w+$")
     result_df = regex_test.test(df, col="value", primary_key="id", nullable=True)
-    results = result_df.select("id", "value", "value__email_test").collect()
+    results = result_df.select("primary_key", "test_value", "test_result").collect()
 
     expected_results = [
         ("1", None, True),  # Null value, should be True due to nullable=True
@@ -115,7 +116,7 @@ def test_regex_test_method_all_nulls_nullable_true(spark):
     ]
 
     assert [
-        (row.id, row.value, row.value__email_test) for row in results
+        (row.primary_key, row.test_value, row.test_result) for row in results
     ] == expected_results
 
 
@@ -131,7 +132,7 @@ def test_regex_test_method_all_nulls_nullable_false(spark):
 
     regex_test = RegexTest(name="email_test", pattern=r"^[\w\.-]+@[\w\.-]+\.\w+$")
     result_df = regex_test.test(df, col="value", primary_key="id", nullable=False)
-    results = result_df.select("id", "value", "value__email_test").collect()
+    results = result_df.select("primary_key", "test_value", "test_result").collect()
 
     expected_results = [
         ("1", None, False),  # Null value, should be False due to nullable=False
@@ -139,7 +140,7 @@ def test_regex_test_method_all_nulls_nullable_false(spark):
     ]
 
     assert [
-        (row.id, row.value, row.value__email_test) for row in results
+        (row.primary_key, row.test_value, row.test_result) for row in results
     ] == expected_results
 
 
@@ -160,7 +161,7 @@ def test_regex_test_method_no_nulls_and_boolean_output(spark):
 
     regex_test = RegexTest(name="email_test", pattern=r"^[\w\.-]+@[\w\.-]+\.\w+$")
     result_df = regex_test.test(df, col="value", primary_key="id", nullable=True)
-    assert result_df.schema["value__email_test"].dataType == BooleanType()
+    assert result_df.schema["test_result"].dataType == BooleanType()
 
 
 def test_regex_test_method_mixed_data(spark):
@@ -181,7 +182,7 @@ def test_regex_test_method_mixed_data(spark):
 
     regex_test = RegexTest(name="email_test", pattern=r"^[\w\.-]+@[\w\.-]+\.\w+$")
     result_df = regex_test.test(df, col="value", primary_key="id", nullable=True)
-    results = result_df.select("id", "value", "value__email_test").collect()
+    results = result_df.select("primary_key", "test_value", "test_result").collect()
 
     expected_results = [
         ("1", "test@example.com", True),  # Matches the regex
@@ -192,5 +193,5 @@ def test_regex_test_method_mixed_data(spark):
     ]
 
     assert [
-        (row.id, row.value, row.value__email_test) for row in results
+        (row.primary_key, row.test_value, row.test_result) for row in results
     ] == expected_results

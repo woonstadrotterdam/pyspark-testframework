@@ -8,6 +8,31 @@
 
 The goal of the `pyspark-testframework` is to provide a simple way to create tests for PySpark DataFrames. The test results are returned in DataFrame format as well.
 
+> [!NOTE]
+> From version v3.\*.\* we changed from a wide-format to a **long-format** structure for storing test results.
+> This long-format approach makes it easier to:
+>
+> - Filter and analyze specific test results
+> - Add new tests without changing the schema
+> - Perform aggregations across different tests
+> - Export results to other systems
+> - Track when tests were executed
+> - Include actual values that were tested for debugging
+
+## Test Results
+
+The framework uses a long-format structure for storing test results. Each test result is stored as a separate row with the following columns:
+
+- `primary_key`: Primary key value as string (e.g., "1", "2", "3")
+- `primary_key_col`: Name of the primary key column (e.g., "id")
+- `test_name`: Name of the test (e.g., "ValidStreetFormat")
+- `test_col`: Name of the column that was tested (e.g., "street")
+- `test_value`: The actual value that was tested (e.g., "Rochussenstraat")
+- `test_result`: Boolean result of the test (True/False)
+- `test_description`: Description of the test
+- `timestamp`: UTC timestamp when the test was executed
+- Additional columns: Any additional context columns specified during initialization (e.g., if you pass `context_cols=["street", "house_number"]`, these columns will be included in the results)
+
 # Tutorial
 
 **Let's first create an example pyspark DataFrame**
@@ -93,19 +118,19 @@ df_tester.test(
     col="street",
     test=valid_street_format,
     nullable=False,  # nullable is False, hence null values are converted to False
-    description="Street is in valid Dutch street format.",
+    description="Street is in valid Dutch street format",
 ).show(truncate=False)
 ```
 
-    +---+--------------------+-------------------------+
-    |id |street              |street__ValidStreetFormat|
-    +---+--------------------+-------------------------+
-    |1  |Rochussenstraat     |true                     |
-    |2  |Coolsingel          |true                     |
-    |3  |%Witte de Withstraat|false                    |
-    |4  |Lijnbaan            |true                     |
-    |5  |null                |false                    |
-    +---+--------------------+-------------------------+
+    +-----------+-------------------------+-----------+--------------------+--------------------------------------+--------+
+    |primary_key|test_name                |test_result|test_value          |test_description                      |test_col|
+    +-----------+-------------------------+-----------+--------------------+--------------------------------------+--------+
+    |1          |street__ValidStreetFormat|true       |Rochussenstraat     |Street is in valid Dutch street format|street  |
+    |2          |street__ValidStreetFormat|true       |Coolsingel          |Street is in valid Dutch street format|street  |
+    |3          |street__ValidStreetFormat|false      |%Witte de Withstraat|Street is in valid Dutch street format|street  |
+    |4          |street__ValidStreetFormat|true       |Lijnbaan            |Street is in valid Dutch street format|street  |
+    |5          |street__ValidStreetFormat|false      |null                |Street is in valid Dutch street format|street  |
+    +-----------+-------------------------+-----------+--------------------+--------------------------------------+--------+
 
 **Run the `IntegerString` test on the _number_ column**
 
@@ -123,11 +148,11 @@ df_tester.test(
 ).show()
 ```
 
-    +---+------------+-------------------------------+
-    | id|house_number|house_number__ValidNumericRange|
-    +---+------------+-------------------------------+
-    |  4|          -3|                          false|
-    +---+------------+-------------------------------+
+    +-----------+--------------------+-----------+----------+-----------------+------------+
+    |primary_key|           test_name|test_result|test_value| test_description|    test_col|
+    +-----------+--------------------+-----------+----------+-----------------+------------+
+    |          4|house_number__Val...|      false|        -3|ValidNumericRange|house_number|
+    +-----------+--------------------+-----------+----------+-----------------+------------+
 
 **Let's take a look at the test results of the DataFrame using the `.results` attribute.**
 
@@ -135,39 +160,20 @@ df_tester.test(
 df_tester.results.show(truncate=False)
 ```
 
-    +---+-------------------------+-------------------------------+
-    |id |street__ValidStreetFormat|house_number__ValidNumericRange|
-    +---+-------------------------+-------------------------------+
-    |1  |true                     |true                           |
-    |2  |true                     |true                           |
-    |3  |false                    |true                           |
-    |4  |true                     |false                          |
-    |5  |false                    |true                           |
-    +---+-------------------------+-------------------------------+
-
-**We can use `.descriptions` or `.descriptions_df` to get the descriptions of the tests.**
-
-<br>
-This can be useful for reporting purposes.   
-For example to create reports for the business with more detailed information than just the column name and the test name.
-
-```python
-df_tester.descriptions
-```
-
-    {'street__ValidStreetFormat': 'Street is in valid Dutch street format.',
-     'house_number__ValidNumericRange': 'house_number__ValidNumericRange(min_value=1.0, max_value=inf)'}
-
-```python
-df_tester.description_df.show(truncate=False)
-```
-
-    +-------------------------------+-------------------------------------------------------------+
-    |test                           |description                                                  |
-    +-------------------------------+-------------------------------------------------------------+
-    |street__ValidStreetFormat      |Street is in valid Dutch street format.                      |
-    |house_number__ValidNumericRange|house_number__ValidNumericRange(min_value=1.0, max_value=inf)|
-    +-------------------------------+-------------------------------------------------------------+
+    +-----------+-------------------------------+-----------+--------------------+--------------------------------------+------------+---------------+-----------------------+
+    |primary_key|test_name                      |test_result|test_value          |test_description                      |test_col    |primary_key_col|timestamp              |
+    +-----------+-------------------------------+-----------+--------------------+--------------------------------------+------------+---------------+-----------------------+
+    |1          |street__ValidStreetFormat      |true       |Rochussenstraat     |Street is in valid Dutch street format|street      |id             |2025-10-13 15:30:53.094|
+    |2          |street__ValidStreetFormat      |true       |Coolsingel          |Street is in valid Dutch street format|street      |id             |2025-10-13 15:30:53.094|
+    |3          |street__ValidStreetFormat      |false      |%Witte de Withstraat|Street is in valid Dutch street format|street      |id             |2025-10-13 15:30:53.094|
+    |4          |street__ValidStreetFormat      |true       |Lijnbaan            |Street is in valid Dutch street format|street      |id             |2025-10-13 15:30:53.094|
+    |5          |street__ValidStreetFormat      |false      |null                |Street is in valid Dutch street format|street      |id             |2025-10-13 15:30:53.094|
+    |1          |house_number__ValidNumericRange|true       |27                  |ValidNumericRange                     |house_number|id             |2025-10-13 15:30:53.094|
+    |2          |house_number__ValidNumericRange|true       |31                  |ValidNumericRange                     |house_number|id             |2025-10-13 15:30:53.094|
+    |3          |house_number__ValidNumericRange|true       |27                  |ValidNumericRange                     |house_number|id             |2025-10-13 15:30:53.094|
+    |4          |house_number__ValidNumericRange|false      |-3                  |ValidNumericRange                     |house_number|id             |2025-10-13 15:30:53.094|
+    |5          |house_number__ValidNumericRange|true       |13                  |ValidNumericRange                     |house_number|id             |2025-10-13 15:30:53.094|
+    +-----------+-------------------------------+-----------+--------------------+--------------------------------------+------------+---------------+-----------------------+
 
 ### Custom tests
 
@@ -177,17 +183,18 @@ Let's do this using a custom test which should tests that every house has a bath
 
 ```python
 rooms = [
-    (1,1, "living room"),
-    (2,1, "bathroom"),
-    (3,1, "kitchen"),
-    (4,1, "bed room"),
-    (5,2, "living room"),
-    (6,2, "bed room"),
-    (7,2, "kitchen"),
+    (1, 1, "living room"),
+    (2, 1, "bathroom"),
+    (3, 1, "kitchen"),
+    (4, 1, "bed room"),
+    (5, 2, "living room"),
+    (6, 2, "bed room"),
+    (7, 2, "kitchen"),
 ]
 
 schema_rooms = StructType(
-    [   StructField("id", IntegerType(), True),
+    [
+        StructField("id", IntegerType(), True),
         StructField("house_id", IntegerType(), True),
         StructField("room", StringType(), True),
     ]
@@ -244,15 +251,12 @@ df_tester.add_custom_test_result(
 ).show(truncate=False)
 ```
 
-    +---+------------+
-    |id |has_bathroom|
-    +---+------------+
-    |1  |true        |
-    |2  |false       |
-    |3  |null        |
-    |4  |null        |
-    |5  |null        |
-    +---+------------+
+    +-----------+------------+-----------+-----------------------+--------------------+---------------------+---------------+-----------------------+
+    |primary_key|test_name   |test_result|test_value             |test_description    |test_col             |primary_key_col|timestamp              |
+    +-----------+------------+-----------+-----------------------+--------------------+---------------------+---------------+-----------------------+
+    |1          |has_bathroom|true       |__custom__test__value__|House has a bathroom|__custom__test__col__|id             |2025-10-13 15:30:59.902|
+    |2          |has_bathroom|false      |__custom__test__value__|House has a bathroom|__custom__test__col__|id             |2025-10-13 15:30:59.902|
+    +-----------+------------+-----------+-----------------------+--------------------+---------------------+---------------+-----------------------+
 
 **Despite that the data whether a house has a bath room is not available in the house DataFrame; we can still add the custom test to the `DataFrameTester` object.**
 
@@ -260,23 +264,22 @@ df_tester.add_custom_test_result(
 df_tester.results.show(truncate=False)
 ```
 
-    +---+-------------------------+-------------------------------+------------+
-    |id |street__ValidStreetFormat|house_number__ValidNumericRange|has_bathroom|
-    +---+-------------------------+-------------------------------+------------+
-    |1  |true                     |true                           |true        |
-    |2  |true                     |true                           |false       |
-    |3  |false                    |true                           |null        |
-    |4  |true                     |false                          |null        |
-    |5  |false                    |true                           |null        |
-    +---+-------------------------+-------------------------------+------------+
-
-```python
-df_tester.descriptions
-```
-
-    {'street__ValidStreetFormat': 'Street is in valid Dutch street format.',
-     'house_number__ValidNumericRange': 'house_number__ValidNumericRange(min_value=1.0, max_value=inf)',
-     'has_bathroom': 'House has a bathroom'}
+    +-----------+-------------------------------+-----------+-----------------------+--------------------------------------+---------------------+---------------+-----------------------+
+    |primary_key|test_name                      |test_result|test_value             |test_description                      |test_col             |primary_key_col|timestamp              |
+    +-----------+-------------------------------+-----------+-----------------------+--------------------------------------+---------------------+---------------+-----------------------+
+    |1          |street__ValidStreetFormat      |true       |Rochussenstraat        |Street is in valid Dutch street format|street               |id             |2025-10-13 15:31:20.538|
+    |2          |street__ValidStreetFormat      |true       |Coolsingel             |Street is in valid Dutch street format|street               |id             |2025-10-13 15:31:20.538|
+    |3          |street__ValidStreetFormat      |false      |%Witte de Withstraat   |Street is in valid Dutch street format|street               |id             |2025-10-13 15:31:20.538|
+    |4          |street__ValidStreetFormat      |true       |Lijnbaan               |Street is in valid Dutch street format|street               |id             |2025-10-13 15:31:20.538|
+    |5          |street__ValidStreetFormat      |false      |null                   |Street is in valid Dutch street format|street               |id             |2025-10-13 15:31:20.538|
+    |1          |house_number__ValidNumericRange|true       |27                     |ValidNumericRange                     |house_number         |id             |2025-10-13 15:31:20.538|
+    |2          |house_number__ValidNumericRange|true       |31                     |ValidNumericRange                     |house_number         |id             |2025-10-13 15:31:20.538|
+    |3          |house_number__ValidNumericRange|true       |27                     |ValidNumericRange                     |house_number         |id             |2025-10-13 15:31:20.538|
+    |4          |house_number__ValidNumericRange|false      |-3                     |ValidNumericRange                     |house_number         |id             |2025-10-13 15:31:20.538|
+    |5          |house_number__ValidNumericRange|true       |13                     |ValidNumericRange                     |house_number         |id             |2025-10-13 15:31:20.538|
+    |1          |has_bathroom                   |true       |__custom__test__value__|House has a bathroom                  |__custom__test__col__|id             |2025-10-13 15:31:20.538|
+    |2          |has_bathroom                   |false      |__custom__test__value__|House has a bathroom                  |__custom__test__col__|id             |2025-10-13 15:31:20.538|
+    +-----------+-------------------------------+-----------+-----------------------+--------------------------------------+---------------------+---------------+-----------------------+
 
 **We can also get a summary of the test results using the `.summary` attribute.**
 
@@ -284,13 +287,13 @@ df_tester.descriptions
 df_tester.summary.show(truncate=False)
 ```
 
-    +-------------------------------+-------------------------------------------------------------+-------+--------+-----------------+--------+-----------------+
-    |test                           |description                                                  |n_tests|n_passed|percentage_passed|n_failed|percentage_failed|
-    +-------------------------------+-------------------------------------------------------------+-------+--------+-----------------+--------+-----------------+
-    |street__ValidStreetFormat      |Street is in valid Dutch street format.                      |5      |3       |60.0             |2       |40.0             |
-    |house_number__ValidNumericRange|house_number__ValidNumericRange(min_value=1.0, max_value=inf)|5      |4       |80.0             |1       |20.0             |
-    |has_bathroom                   |House has a bathroom                                         |2      |1       |50.0             |1       |50.0             |
-    +-------------------------------+-------------------------------------------------------------+-------+--------+-----------------+--------+-----------------+
+    +-------------------------------+--------------------------------------+---------------------+-------+--------+-----------------+--------+-----------------+---------------+-----------------------+
+    |test_name                      |test_description                      |test_col             |n_tests|n_passed|percentage_passed|n_failed|percentage_failed|primary_key_col|timestamp              |
+    +-------------------------------+--------------------------------------+---------------------+-------+--------+-----------------+--------+-----------------+---------------+-----------------------+
+    |has_bathroom                   |House has a bathroom                  |__custom__test__col__|2      |1       |50.0             |1       |50.0             |id             |2025-10-13 15:31:33.733|
+    |house_number__ValidNumericRange|ValidNumericRange                     |house_number         |5      |4       |80.0             |1       |20.0             |id             |2025-10-13 15:31:33.733|
+    |street__ValidStreetFormat      |Street is in valid Dutch street format|street               |5      |3       |60.0             |2       |40.0             |id             |2025-10-13 15:31:33.733|
+    +-------------------------------+--------------------------------------+---------------------+-------+--------+-----------------+--------+-----------------+---------------+-----------------------+
 
 **If you want to see all rows that failed any of the tests, you can use the `.failed_tests` attribute.**
 
@@ -298,14 +301,14 @@ df_tester.summary.show(truncate=False)
 df_tester.failed_tests.show(truncate=False)
 ```
 
-    +---+-------------------------+-------------------------------+------------+
-    |id |street__ValidStreetFormat|house_number__ValidNumericRange|has_bathroom|
-    +---+-------------------------+-------------------------------+------------+
-    |2  |true                     |true                           |false       |
-    |3  |false                    |true                           |null        |
-    |4  |true                     |false                          |null        |
-    |5  |false                    |true                           |null        |
-    +---+-------------------------+-------------------------------+------------+
+    +-----------+-------------------------------+-----------+-----------------------+--------------------------------------+---------------------+
+    |primary_key|test_name                      |test_result|test_value             |test_description                      |test_col             |
+    +-----------+-------------------------------+-----------+-----------------------+--------------------------------------+---------------------+
+    |3          |street__ValidStreetFormat      |false      |%Witte de Withstraat   |Street is in valid Dutch street format|street               |
+    |5          |street__ValidStreetFormat      |false      |null                   |Street is in valid Dutch street format|street               |
+    |4          |house_number__ValidNumericRange|false      |-3                     |ValidNumericRange                     |house_number         |
+    |2          |has_bathroom                   |false      |__custom__test__value__|House has a bathroom                  |__custom__test__col__|
+    +-----------+-------------------------------+-----------+-----------------------+--------------------------------------+---------------------+
 
 **Of course, you can also see all rows that passed all tests using the `.passed_tests` attribute.**
 
@@ -313,8 +316,15 @@ df_tester.failed_tests.show(truncate=False)
 df_tester.passed_tests.show(truncate=False)
 ```
 
-    +---+-------------------------+-------------------------------+------------+
-    |id |street__ValidStreetFormat|house_number__ValidNumericRange|has_bathroom|
-    +---+-------------------------+-------------------------------+------------+
-    |1  |true                     |true                           |true        |
-    +---+-------------------------+-------------------------------+------------+
+    +-----------+-------------------------------+-----------+-----------------------+--------------------------------------+---------------------+
+    |primary_key|test_name                      |test_result|test_value             |test_description                      |test_col             |
+    +-----------+-------------------------------+-----------+-----------------------+--------------------------------------+---------------------+
+    |1          |street__ValidStreetFormat      |true       |Rochussenstraat        |Street is in valid Dutch street format|street               |
+    |2          |street__ValidStreetFormat      |true       |Coolsingel             |Street is in valid Dutch street format|street               |
+    |4          |street__ValidStreetFormat      |true       |Lijnbaan               |Street is in valid Dutch street format|street               |
+    |1          |house_number__ValidNumericRange|true       |27                     |ValidNumericRange                     |house_number         |
+    |2          |house_number__ValidNumericRange|true       |31                     |ValidNumericRange                     |house_number         |
+    |3          |house_number__ValidNumericRange|true       |27                     |ValidNumericRange                     |house_number         |
+    |5          |house_number__ValidNumericRange|true       |13                     |ValidNumericRange                     |house_number         |
+    |1          |has_bathroom                   |true       |__custom__test__value__|House has a bathroom                  |__custom__test__col__|
+    +-----------+-------------------------------+-----------+-----------------------+--------------------------------------+---------------------+

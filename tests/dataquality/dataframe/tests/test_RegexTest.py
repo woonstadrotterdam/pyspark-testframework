@@ -1,4 +1,5 @@
 from pyspark.sql.types import StringType, StructField, StructType
+
 from testframework.dataquality.tests import (
     RegexTest as RegexTst,  # to prevent pytest confusion
 )
@@ -29,7 +30,7 @@ def test_regex_test_method(spark):
     result_df = regex_test.test(df, col="value", primary_key="id", nullable=True)
 
     # Collect results
-    results = result_df.select("id", "value", "value__email_test").collect()
+    results = result_df.select("primary_key", "test_value", "test_result").collect()
 
     # Check the results
     expected_results = [
@@ -61,7 +62,7 @@ def test_regex_test_no_match(spark):
 
     result_df = regex_test.test(df, col="value", primary_key="id", nullable=False)
 
-    results = result_df.select("id", "value", "value__email_test").collect()
+    results = result_df.select("primary_key", "test_value", "test_result").collect()
 
     expected_results = [
         ("1", "no-email-here", False),  # Does not match the regex
@@ -92,7 +93,7 @@ def test_regex_test_partial_match(spark):
 
     result_df = regex_test.test(df, col="value", primary_key="id", nullable=False)
 
-    results = result_df.select("id", "value", "value__domain_test").collect()
+    results = result_df.select("primary_key", "test_value", "test_result").collect()
 
     expected_results = [
         ("1", "test1@example.com", True),  # Matches the regex
@@ -124,7 +125,7 @@ def test_regex_test_empty_string(spark):
 
     result_df = regex_test.test(df, col="value", primary_key="id", nullable=True)
 
-    results = result_df.select("id", "value", "value__non_empty_test").collect()
+    results = result_df.select("primary_key", "test_value", "test_result").collect()
 
     expected_results = [
         ("1", "", False),  # Empty string, does not match regex
@@ -156,7 +157,7 @@ def test_regex_test_special_characters(spark):
 
     result_df = regex_test.test(df, col="value", primary_key="id", nullable=True)
 
-    results = result_df.select("id", "value", "value__special_char_test").collect()
+    results = result_df.select("primary_key", "test_value", "test_result").collect()
 
     expected_results = [
         ("1", "test@example.com", True),  # Matches the regex

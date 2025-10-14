@@ -6,6 +6,7 @@ from pyspark.sql.types import (
     StructField,
     StructType,
 )
+
 from testframework.dataquality.tests import ValidNumericStringRange
 
 
@@ -56,10 +57,8 @@ def test_ValidNumericStringRange(
     # Assuming the ValidNumericStringRange test method returns a DataFrame indicating whether each row is valid
     result_df = test_instance.test(mock_df, "value_str", "id", nullable=nullable)
 
-    col = test_instance.generate_result_col_name("value_str")
-
-    # Count the number of rows considered valid
-    valid_rows = result_df.filter(F.col(col)).count()
+    # Count the number of rows considered valid using long-format
+    valid_rows = result_df.filter(F.col("test_result")).count()
     # if nullable, the None value should be considered valid, thus add the amount of Null rows to the expected rows
     expected_valid_count += (
         int(nullable) * mock_df.filter(F.col("value_str").isNull()).count()
