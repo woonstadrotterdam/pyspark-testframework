@@ -60,3 +60,6 @@ Issues = "https://github.com/woonstadrotterdam/pyspark-testframework/issues"
 [tool.setuptools]
 packages = ["testframework"]
 package-dir = {"" = "src"}
+
+[tool.uv]
+exclude-newer = "1 week"
