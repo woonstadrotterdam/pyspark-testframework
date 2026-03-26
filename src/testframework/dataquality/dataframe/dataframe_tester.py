@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 from pyspark.sql import Column, DataFrame, SparkSession
 from pyspark.sql import functions as F
@@ -41,8 +41,20 @@ class DataFrameTester:
         self.primary_key = primary_key
         self.spark = spark
         self.df = self._check_primary_key(df)
-        self.results: DataFrame = self._initialize_results_dataframe(context_cols)
+        self._results: DataFrame = self._initialize_results_dataframe(context_cols)
+        self._pending_results: List[DataFrame] = []
         self.datetime = F.current_timestamp()
+
+    @property
+    def results(self) -> DataFrame:
+        """Accumulated test results; flushes pending results into one union when first accessed."""
+        if self._pending_results:
+            for pending in self._pending_results:
+                self._results = self._union_with_schema_alignment(
+                    self._results, pending
+                )
+            self._pending_results.clear()
+        return self._results
 
     @classmethod
     def unique_columns(cls, df: DataFrame) -> DataFrame:
@@ -137,30 +149,59 @@ class DataFrameTester:
                 f"Unique primary keys in this DataFrame: {unique_primary_keys}",
             )
 
-        df_filtered = df.dropna(subset=[self.primary_key])
-        null_count = df.count() - df_filtered.count()
+        # Single aggregation for total, non-null, and distinct counts
+        counts = df.agg(
+            F.count("*").alias("total"),
+            F.count(F.col(self.primary_key)).alias("non_null"),
+            F.countDistinct(F.col(self.primary_key)).alias("distinct"),
+        ).collect()[0]
+
+        null_count = counts["total"] - counts["non_null"]
         if null_count > 0:
             logger.warning(
                 f"Primary key '{self.primary_key}' contains null values, {null_count} rows are excluded."
             )
 
-        self.assert_primary_key_unique(df_filtered, self.primary_key)
+        df_filtered = df.dropna(subset=[self.primary_key])
+        self.assert_primary_key_unique(
+            df_filtered,
+            self.primary_key,
+            precomputed_total=counts["non_null"],
+            precomputed_distinct=counts["distinct"],
+        )
         return df_filtered
 
     @classmethod
-    def assert_primary_key_unique(cls, df: DataFrame, primary_key: str) -> None:
+    def assert_primary_key_unique(
+        cls,
+        df: DataFrame,
+        primary_key: str,
+        precomputed_total: Optional[int] = None,
+        precomputed_distinct: Optional[int] = None,
+    ) -> None:
         """
         Checks if the specified primary key column contains unique values.
 
         Args:
             df (DataFrame): The DataFrame to check.
             primary_key (str): The primary key column name.
+            precomputed_total (Optional[int]): If set, used as total count (avoids extra Spark action).
+            precomputed_distinct (Optional[int]): If set with precomputed_total, used as distinct count.
 
         Raises:
             ValueError: If the primary key column does not contain unique values.
         """
-        total_count = df.count()
-        distinct_count = df.select(primary_key).distinct().count()
+        if precomputed_total is not None and precomputed_distinct is not None:
+            total_count = precomputed_total
+            distinct_count = precomputed_distinct
+        else:
+            counts = df.agg(
+                F.count("*").alias("total"),
+                F.countDistinct(F.col(primary_key)).alias("distinct"),
+            ).collect()[0]
+            total_count = counts["total"]
+            distinct_count = counts["distinct"]
+
         if total_count != distinct_count:
             logger.error(
                 f"Primary key '{primary_key}' is not unique ({total_count = }, {distinct_count = }). Determining potential primary keys.."
@@ -285,10 +326,7 @@ class DataFrameTester:
                 )
 
         if not dummy_run:
-            # Union with existing results, handling schema differences
-            self.results = self._union_with_schema_alignment(
-                self.results, long_format_result
-            )
+            self._pending_results.append(long_format_result)
 
         if return_failed_rows:
             long_format_result = long_format_result.filter(
@@ -420,7 +458,11 @@ class DataFrameTester:
                 f"A column with test_name '{name}' not found in test_result DataFrame"
             )
 
-        if result.select(self.primary_key).distinct().count() != result.count():
+        counts = result.agg(
+            F.count("*").alias("total"),
+            F.countDistinct(F.col(self.primary_key)).alias("distinct"),
+        ).collect()[0]
+        if counts["total"] != counts["distinct"]:
             raise ValueError(
                 f"primary_key ('{self.primary_key}') is not unique in test_result DataFrame"
             )
@@ -471,10 +513,7 @@ class DataFrameTester:
                 {"test_result": fillna_value}
             )
 
-        # Union with existing results, handling schema differences
-        self.results = self._union_with_schema_alignment(
-            self.results, long_format_result
-        )
+        self._pending_results.append(long_format_result)
 
         if return_failed_rows:
             long_format_result = long_format_result.filter(
@@ -572,7 +611,7 @@ class DataFrameTester:
 
         If there are no test results, returns an empty DataFrame with the appropriate schema.
         """
-        if self.results.count() == 0:
+        if len(self.results.head(1)) == 0:
             schema = StructType(
                 [
                     StructField("test_name", StringType(), True),
