@@ -8,6 +8,13 @@ from testframework.dataquality._base import Test
 from testframework.utils.decorators import account_for_nullable, allowed_col_types
 
 
+def _try_cast(column: str, target_type: str) -> Column:
+    # F.col(column).cast(...) raises under ANSI mode (default since Spark 4.0) instead of
+    # returning null for malformed input. try_cast has no top-level pyspark.sql.functions
+    # wrapper on Spark 3.x, so we go through the SQL expression to stay Spark 3/4 compatible.
+    return F.expr(f"try_cast(`{column}` AS {target_type})")
+
+
 class ValidNumericStringRange(Test):
     def __init__(
         self,
@@ -29,17 +36,16 @@ class ValidNumericStringRange(Test):
     @account_for_nullable
     @allowed_col_types([StringType])
     def _test_impl(self, df: DataFrame, column: str, nullable: bool) -> Column:
+        casted_double = _try_cast(column, "double")
         if self.floats_allowed:
-            return (F.col(column).cast("double") >= self.min_value) & (
-                F.col(column).cast("double") <= self.max_value
-            )
+            return (casted_double >= self.min_value) & (casted_double <= self.max_value)
         if not self.floats_allowed:
             return (
                 (
-                    F.col(column).cast("double") == F.col(column).cast("int")
-                )  # Check if the value is an integer
-                & (F.col(column) >= self.min_value)
-                & (F.col(column) <= self.max_value)
+                    casted_double == F.floor(casted_double)
+                )  # Check if the value is a whole number, e.g. "10.0" or "10"
+                & (casted_double >= self.min_value)
+                & (casted_double <= self.max_value)
             )
 
     def __str__(self) -> str:

@@ -9,6 +9,14 @@ from testframework.dataquality._base import Test
 from testframework.utils.decorators import account_for_nullable, allowed_col_types
 
 
+def _try_to_date(column: str, date_format: str) -> Column:
+    # F.to_date(...) raises under ANSI mode (default since Spark 4.0) instead of returning
+    # null for a string that doesn't match date_format. There's no try_to_date function (only
+    # try_to_timestamp), so we parse as a timestamp and cast down to a date, which never raises.
+    escaped_format = date_format.replace("'", "''")
+    return F.expr(f"CAST(try_to_timestamp(`{column}`, '{escaped_format}') AS DATE)")
+
+
 class ValidDateRange(Test):
     def __init__(
         self,
@@ -50,7 +58,7 @@ class ValidDateRange(Test):
         # Convert string column to date if needed
         col_type = df.schema[col].dataType
         date_col = (
-            F.to_date(F.col(col), self.date_format)
+            _try_to_date(col, self.date_format)
             if isinstance(col_type, StringType)
             else F.col(col)
         )
