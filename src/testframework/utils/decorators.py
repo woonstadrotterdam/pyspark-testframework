@@ -18,12 +18,16 @@ def account_for_nullable(
     contains null values, those values will be converted to True or False, depending on the `nullable` parameter
     passed to the test method. The decorator ensures that the final result is a boolean column,
     with True for values matching the test criteria, False for non-matching values.
+
+    A non-null value on which the test itself couldn't be evaluated (e.g. a string that fails to
+    parse as a number or date) is treated as False: `nullable` only governs missing values, and an
+    unparseable value is a failed test, not a missing one.
     """
 
     @wraps(func)
     def wrapper(test: Test, df: DataFrame, column: str, nullable: bool) -> Column:
         # Call the original test implementation
-        test_result = func(test, df, column, nullable)
+        test_result = F.coalesce(func(test, df, column, nullable), F.lit(False))
 
         # Adjust the result based on the nullable flag and null values
         if nullable:

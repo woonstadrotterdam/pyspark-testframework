@@ -86,6 +86,25 @@ def test_ValidDateRange_different_formats(
     assert actual_result == expected_result
 
 
+@pytest.mark.parametrize("nullable", [True, False])
+def test_ValidDateRange_malformed_string_does_not_raise(spark, nullable):
+    schema = StructType(
+        [
+            StructField("primary_key", IntegerType(), False),
+            StructField("value", StringType(), True),
+        ]
+    )
+    df = spark.createDataFrame([(1, "not-a-date")], schema)
+
+    test = ValidDateRange(min_date="2022-01-01", max_date="2024-01-01")
+    result_df = test.test(df, "value", "primary_key", nullable=nullable)
+
+    # A malformed (non-null) string is a failed test, not a missing value, so `nullable`
+    # must not turn it into True.
+    actual_result = result_df.collect()[0]["test_result"]
+    assert actual_result is False
+
+
 def test_ValidDateRange_raises_ValueError(spark):
     with pytest.raises(ValueError):
         ValidDateRange()  # both min_date and max_date not defined
